@@ -12,13 +12,13 @@ function assetUrl(path) {
 }
 
 const MEDIA_FEATURES = [
-  { match: '40 Días Después', cover: 'assets/images/40-dias-despues.jpg', coverKind: 'Arte del archivo', copy: 'Una canción para atravesar la espera con la mirada puesta en la promesa.' },
-  { match: 'Astillas Del Olivo', cover: 'assets/images/astillas-del-olivo.jpg', coverKind: 'Arte del archivo', copy: 'Madera, memoria y una voz que encuentra luz en las pequeñas grietas.' },
+  { match: '40 Días Después', cover: 'assets/images/poster-40-dias.png', coverKind: 'Portada oficial', copy: 'Una canción para atravesar la espera con la mirada puesta en la promesa.' },
+  { match: 'Astillas Del Olivo', cover: 'assets/images/poster-astillas.png', coverKind: 'Arte del archivo', copy: 'Madera, memoria y una voz que encuentra luz en las pequeñas grietas.' },
   { match: 'Con Tu Espíritu', cover: 'assets/images/con-tu-espiritu.jpg', coverKind: 'Arte del archivo', copy: 'El aire entre las voces: una oración popfolclor que se mueve despacio.' },
-  { match: 'Mi Dios Artesano', cover: 'assets/images/mi-dios-artesano.jpg', coverKind: 'Arte del archivo', copy: 'Una canción sobre el oficio de crear y la presencia que acompaña el camino.' },
+  { match: 'Mi Dios Artesano', cover: 'assets/images/poster-mi-dios-artesano.png', coverKind: 'Arte del archivo', copy: 'Una canción sobre el oficio de crear y la presencia que acompaña el camino.' },
   { match: 'Mi Huertica', cover: 'assets/images/mi-huertica.jpg', coverKind: 'Arte del archivo', copy: 'Una memoria de diciembre que vuelve a sonar con calidez de casa.' },
-  { match: 'Señor Escucha Mi Cantar', cover: 'assets/images/senor-escucha-mi-cantar.jpg', coverKind: 'Arte del archivo', copy: 'La voz se vuelve conversación: pedir, agradecer y seguir cantando.' },
-  { match: 'Zamba del Olivo Verde', cover: 'assets/images/zamba-del-olivo-verde.jpg', coverKind: 'Arte del archivo', copy: 'Una raíz que se mueve entre el folclor, la celebración y la esperanza.' },
+  { match: 'Señor Escucha Mi Cantar', cover: 'assets/images/poster-senor-escucha.png', coverKind: 'Arte del archivo', copy: 'La voz se vuelve conversación: pedir, agradecer y seguir cantando.' },
+  { match: 'Zamba del Olivo Verde', cover: 'assets/images/poster-zamba.png', coverKind: 'Arte del archivo', copy: 'Una raíz que se mueve entre el folclor, la celebración y la esperanza.' },
   { match: 'Tengo Sed', cover: 'assets/images/poster-tengo-sed.png', coverKind: 'Arte del archivo', copy: 'S.A.L. abre una grieta de rock alternativo para decir lo que arde.' }
 ];
 
