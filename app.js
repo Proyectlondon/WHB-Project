@@ -1,5 +1,11 @@
 const $ = (selector, scope = document) => scope.querySelector(selector);
 const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
+const PUBLIC_ASSET_BASE = 'https://raw.githubusercontent.com/Proyectlondon/WHB-Project/main/';
+
+function assetUrl(path) {
+  if (!path || !window.location.hostname.endsWith('vercel.app')) return path;
+  return PUBLIC_ASSET_BASE + path.split('/').map((part) => encodeURIComponent(part)).join('/');
+}
 
 class WindField {
   constructor(canvas, foreground = false) {
@@ -158,7 +164,7 @@ function renderAudio(audio) {
   const root = $('#audio-catalog');
   if (!root) return;
   const groups = groupBy(audio, 'album');
-  root.innerHTML = Object.entries(groups).map(([album, tracks], albumIndex) => `<details class="album-block"${albumIndex === 0 ? ' open' : ''}><summary class="album-title"><span>${album}</span><span class="album-meta"><span>${tracks.length} ${tracks.length === 1 ? 'pista' : 'pistas'}</span><span class="album-toggle" aria-hidden="true"></span></span></summary><div class="album-track-list">${tracks.map((track, index) => `<div class="track"><span class="track-no">${String(index + 1).padStart(2, '0')}</span><span class="track-title">${track.title}</span><audio controls preload="none" src="${encodeURI(track.path)}" aria-label="Reproducir ${track.title}"></audio></div>`).join('')}</div></details>`).join('');
+  root.innerHTML = Object.entries(groups).map(([album, tracks], albumIndex) => `<details class="album-block"${albumIndex === 0 ? ' open' : ''}><summary class="album-title"><span>${album}</span><span class="album-meta"><span>${tracks.length} ${tracks.length === 1 ? 'pista' : 'pistas'}</span><span class="album-toggle" aria-hidden="true"></span></span></summary><div class="album-track-list">${tracks.map((track, index) => `<div class="track"><span class="track-no">${String(index + 1).padStart(2, '0')}</span><span class="track-title">${track.title}</span><audio controls preload="none" src="${assetUrl(track.path)}" aria-label="Reproducir ${track.title}"></audio></div>`).join('')}</div></details>`).join('');
   $('#audio-count').textContent = audio.length;
 }
 
@@ -172,7 +178,7 @@ function renderVideos(videos, filter = 'all') {
 function renderGallery(gallery) {
   const root = $('#gallery-grid');
   if (!root) return;
-  root.innerHTML = gallery.map((item) => `<figure class="gallery-tile"><img loading="lazy" src="${item.src}" alt="${item.alt}"><figcaption class="gallery-caption"><span>${item.label}</span><b>${item.title}</b></figcaption></figure>`).join('');
+  root.innerHTML = gallery.map((item) => `<figure class="gallery-tile"><img loading="lazy" src="${assetUrl(item.src)}" alt="${item.alt}"><figcaption class="gallery-caption"><span>${item.label}</span><b>${item.title}</b></figcaption></figure>`).join('');
 }
 
 async function loadCatalog() {
