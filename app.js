@@ -315,6 +315,14 @@ function renderMedia(catalog) {
     thumbs.innerHTML = archive.slice(0, 6).map((item, itemIndex) => `<button class="media-thumb${itemIndex === galleryIndex ? ' is-active' : ''}" type="button" data-gallery-index="${itemIndex}" aria-label="Ver imagen ${itemIndex + 1}"><img loading="lazy" src="${assetUrl(item.src)}" alt=""></button>`).join('');
   };
 
+  const renderGalleryState = () => {
+    if (!archive.length) return;
+    const image = archive[galleryIndex % archive.length];
+    if (galleryImage) { galleryImage.src = assetUrl(image.src); galleryImage.alt = image.alt; }
+    if (galleryCaption) galleryCaption.textContent = `${image.label} · ${image.title}`;
+    renderGalleryThumbs();
+  };
+
   const update = (direction = 0) => {
     const item = items[mediaIndex];
     if (direction && root) {
@@ -333,28 +341,41 @@ function renderMedia(catalog) {
     if (frame) frame.innerHTML = `<iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${item.id}?rel=0" title="${item.title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
     if (index) index.textContent = String(mediaIndex + 1).padStart(2, '0');
     if (total) total.textContent = String(items.length).padStart(2, '0');
-    if (archive.length) {
-      const image = archive[galleryIndex % archive.length];
-      if (galleryImage) { galleryImage.src = assetUrl(image.src); galleryImage.alt = image.alt; }
-      if (galleryCaption) galleryCaption.textContent = `${image.label} · ${image.title}`;
-      renderGalleryThumbs();
-    }
+    renderGalleryState();
   };
 
   $$('[data-media-prev]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex - 1 + items.length) % items.length; update(-1); }));
   $$('[data-media-next]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex + 1) % items.length; update(1); }));
-  $$('[data-gallery-prev]').forEach((button) => button.addEventListener('click', () => { galleryIndex = (galleryIndex - 1 + archive.length) % archive.length; update(0); }));
-  $$('[data-gallery-next]').forEach((button) => button.addEventListener('click', () => { galleryIndex = (galleryIndex + 1) % archive.length; update(0); }));
+  $$('[data-gallery-prev]').forEach((button) => button.addEventListener('click', () => { galleryIndex = (galleryIndex - 1 + archive.length) % archive.length; renderGalleryState(); }));
+  $$('[data-gallery-next]').forEach((button) => button.addEventListener('click', () => { galleryIndex = (galleryIndex + 1) % archive.length; renderGalleryState(); }));
   thumbs?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-gallery-index]');
     if (!button) return;
     galleryIndex = Number(button.dataset.galleryIndex) || 0;
-    update(0);
+    renderGalleryState();
   });
   root.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowRight') { mediaIndex = (mediaIndex + 1) % items.length; update(1); }
     if (event.key === 'ArrowLeft') { mediaIndex = (mediaIndex - 1 + items.length) % items.length; update(-1); }
   });
+  let touchStart = null;
+  const swipeTarget = $('.media-song-shell', root) || root;
+  swipeTarget.addEventListener('touchstart', (event) => {
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    touchStart = { x: touch.clientX, y: touch.clientY, time: performance.now() };
+  }, { passive: true });
+  swipeTarget.addEventListener('touchend', (event) => {
+    if (!touchStart) return;
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - touchStart.x;
+    const dy = touch.clientY - touchStart.y;
+    const elapsed = performance.now() - touchStart.time;
+    touchStart = null;
+    if (elapsed > 900 || Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.18) return;
+    mediaIndex = dx < 0 ? (mediaIndex + 1) % items.length : (mediaIndex - 1 + items.length) % items.length;
+    update(dx < 0 ? 1 : -1);
+  }, { passive: true });
   root.tabIndex = 0;
   update();
 }
