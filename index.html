@@ -14,8 +14,8 @@
 <body>
   <div class="prelude" aria-hidden="true"><span></span></div>
   <div class="hero-opening" id="hero-opening" role="dialog" aria-modal="true" aria-label="Apertura de Campo de aliento">
-      <video id="hero-video" class="hero-opening-video" muted playsinline preload="auto" poster="assets/images/hero-whb-poster.jpg">
-        <source src="assets/video/hero-whb-2k.mp4" type="video/mp4">
+      <video id="hero-video" class="hero-opening-video" muted autoplay playsinline preload="auto" poster="assets/images/hero-whb-poster.jpg" data-asset-poster="assets/images/hero-whb-poster.jpg">
+        <source src="assets/video/hero-whb-2k.mp4" type="video/mp4" data-asset="assets/video/hero-whb-2k.mp4">
       </video>
     <div class="hero-opening-shade" aria-hidden="true"></div>
     <div class="hero-opening-ui">
@@ -40,7 +40,7 @@
     </a>
     <div class="topbar-right">
       <span class="location">Bogotá · Tocancipá · Cali</span>
-      <button class="sound-toggle" type="button" aria-pressed="false"><span class="sound-dot"></span><span>Ambiente</span></button>
+      <button class="sound-toggle" type="button" aria-pressed="false" aria-label="Activar ambiente de viento"><span class="sound-dot"></span><span>Ambiente</span></button>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="chapter-nav">Menú</button>
     </div>
   </header>
@@ -50,8 +50,8 @@
     <a href="#story" data-section="story"><span>01</span> Historia</a>
     <a href="#members" data-section="members"><span>02</span> Integrantes</a>
     <a href="#music" data-section="music"><span>03</span> Música</a>
-    <a href="#videos" data-section="videos"><span>04</span> Videos</a>
-    <a href="#gallery" data-section="gallery"><span>05</span> Arte</a>
+    <a href="#media-video" data-section="media-video"><span>04</span> Videos</a>
+    <a href="#media-gallery" data-section="media-gallery"><span>05</span> Arte</a>
     <a href="#family" data-section="family"><span>06</span> Universo 3FR</a>
     <a href="#services" data-section="services"><span>07</span> Servicios</a>
     <a href="#contact" data-section="contact"><span>08</span> Contacto</a>
@@ -78,7 +78,7 @@
         <h2>Una voz que<br><em>viene de lejos.</em></h2>
       </div>
       <div class="story-grid">
-        <figure class="image-frame tall-frame"><img src="assets/images/herencia-espiritual.jpg" alt="Arte de Herencia Espiritual de WHB Project"><figcaption>Herencia espiritual · archivo WHB</figcaption></figure>
+        <figure class="image-frame tall-frame"><img src="assets/images/herencia-espiritual.jpg" data-asset="assets/images/herencia-espiritual.jpg" alt="Arte de Herencia Espiritual de WHB Project"><figcaption>Herencia espiritual · archivo WHB</figcaption></figure>
         <div class="story-copy">
           <p class="pull-quote">“Whispering His Breath” significa susurrando su aliento: una imagen para la fe que se mueve, aunque no siempre se vea.</p>
           <p>WHB Project nació en Bogotá–Cundinamarca en 2017. Desde entonces escribimos canciones que cruzan el pop, el folclor colombiano y una mirada cristocéntrica abierta a todo público.</p>
@@ -103,24 +103,28 @@
 
     <section class="chapter music" id="music" data-chapter="03">
       <div class="section-head"><div><p class="eyebrow">03 · LA MÚSICA</p><h2>Volver a la<br><em>loma.</em></h2></div><div class="section-stat"><strong id="audio-count">—</strong><span>Radio Versions<br>para escuchar aquí</span></div></div>
-      <div class="music-layout"><div id="audio-catalog" class="audio-catalog"><p class="loading">Cargando el archivo sonoro…</p></div><aside class="listen-aside"><img src="assets/images/son-del-monte.jpg" alt="WHB Project, Son del Monte"><div class="aside-copy"><p class="eyebrow">CATÁLOGO COMPLETO</p><h3>La música también<br>vive fuera de Spotify.</h3><p>Escucha las Radio Version directamente aquí o abre la plataforma que ya usas.</p><div class="aside-links"><a class="button button-light" href="https://open.spotify.com/artist/3Ban3jhZSeynTDAlZweSIp" target="_blank" rel="noreferrer">Spotify ↗</a><a class="text-link" href="#videos">Ver videoclips <span>↘</span></a></div></div></aside></div>
+      <div class="music-layout"><div id="audio-catalog" class="audio-catalog"><p class="loading">Cargando el archivo sonoro…</p></div><aside class="listen-aside"><img src="assets/images/son-del-monte.jpg" data-asset="assets/images/son-del-monte.jpg" alt="WHB Project, Son del Monte"><div class="aside-copy"><p class="eyebrow">CATÁLOGO COMPLETO</p><h3>La música también<br>vive fuera de Spotify.</h3><p>Escucha las Radio Version directamente aquí o abre la plataforma que ya usas.</p><div class="aside-links"><a class="button button-light" href="https://open.spotify.com/artist/3Ban3jhZSeynTDAlZweSIp" target="_blank" rel="noreferrer">Spotify ↗</a><a class="text-link" href="#media-video">Ver videoclips <span>↘</span></a></div></div></aside></div>
     </section>
 
-    <section class="chapter videos" id="videos" data-chapter="04">
-      <div class="section-head"><div><p class="eyebrow">04 · IMAGEN EN MOVIMIENTO</p><h2>Las canciones<br><em>toman cuerpo.</em></h2></div><p class="section-note">Videos oficiales, visualizers y sesiones publicados en YouTube. Reproducibles sin abandonar esta página.</p></div>
-      <div class="filter-row" role="group" aria-label="Filtrar videos"><button class="filter is-active" data-filter="all">Todos</button><button class="filter" data-filter="WHB Project">WHB Project</button><button class="filter" data-filter="S.A.L">S.A.L</button><button class="filter" data-filter="Pneuma">Pneuma</button></div>
-      <div id="video-catalog" class="video-grid"><p class="loading">Abriendo el archivo visual…</p></div>
-    </section>
-
-    <section class="chapter gallery" id="gallery" data-chapter="05">
-      <div class="section-head"><div><p class="eyebrow">05 · EL ARTE DE LA LOMA</p><h2>Lo que queda<br><em>cuando suena.</em></h2></div><p class="section-note">Portadas, posters y momentos que forman la memoria visual del proyecto.</p></div>
-      <div id="gallery-grid" class="gallery-grid"><p class="loading">Revelando el archivo…</p></div>
+    <section class="chapter media-archive" id="media" data-chapter="04">
+      <div class="section-head media-archive-head"><div><p class="eyebrow">04–05 · OBRA Y MEMORIA</p><h2>Las canciones<br><em>toman cuerpo.</em></h2></div><p class="section-note">Portadas, videoclips y fotografías para recorrer el archivo de WHB como se recorre una loma: con tiempo para mirar y volver.</p></div>
+      <div class="media-stage" id="media-stage" aria-label="Archivo audiovisual de WHB Project">
+        <div class="media-song-shell" data-nav-anchor="media-video" data-chapter="04" id="media-video" tabindex="-1">
+          <figure class="media-cover-frame"><img id="media-cover" src="assets/images/40-dias-despues.jpg" alt="Portada de 40 Días Después"><figcaption><span id="media-group">WHB Project</span><span id="media-album">Fundamentales Desde La Loma Vol. 1</span></figcaption></figure>
+          <div class="media-song-copy"><p class="eyebrow"><span class="eyebrow-line"></span><span id="media-index">01</span> <span>/</span> <span id="media-total">08</span></p><h3 id="media-title">40 Días Después</h3><p id="media-copy">Una canción para atravesar la espera con la mirada puesta en la promesa.</p><span id="media-kind" class="media-kind">Video oficial</span><div class="media-song-controls"><button type="button" class="media-arrow" data-media-prev aria-label="Canción anterior">←</button><button type="button" class="media-arrow" data-media-next aria-label="Siguiente canción">→</button><span>Desliza la loma</span></div></div>
+        </div>
+        <div class="media-panels">
+          <article class="media-panel media-video-panel" aria-labelledby="media-video-title"><div class="media-panel-head"><div><p class="eyebrow">04 · VIDEO</p><h4 id="media-video-title">La canción<br><em>toma cuerpo.</em></h4></div><span class="media-panel-mark">YouTube</span></div><div id="media-player" class="media-player"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/-RHLsyCG-1U?rel=0" title="40 Días Después" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div></article>
+          <article class="media-panel media-gallery-panel" id="media-gallery" data-nav-anchor="media-gallery" data-chapter="05" aria-labelledby="media-gallery-title"><div class="media-panel-head"><div><p class="eyebrow">05 · ARTE</p><h4 id="media-gallery-title">El archivo<br><em>respira aquí.</em></h4></div><span class="media-panel-mark">Archivo WHB</span></div><div class="media-gallery-view"><img id="media-gallery-image" src="assets/images/photo-live-01.jpg" alt="WHB Project en vivo"><p id="media-gallery-caption">Archivo · En vivo · La loma compartida</p></div><div class="media-gallery-foot"><div id="media-gallery-thumbs" class="media-gallery-thumbs" aria-label="Seleccionar fotografía"></div><div class="media-gallery-controls"><button type="button" class="media-arrow" data-gallery-prev aria-label="Fotografía anterior">←</button><button type="button" class="media-arrow" data-gallery-next aria-label="Siguiente fotografía">→</button></div></div></article>
+        </div>
+      </div>
+      <details class="media-catalog-details"><summary>Explorar el archivo completo de videos <span>22 piezas</span><b aria-hidden="true"></b></summary><div class="filter-row" role="group" aria-label="Filtrar videos"><button class="filter is-active" data-filter="all">Todos</button><button class="filter" data-filter="WHB Project">WHB Project</button><button class="filter" data-filter="S.A.L">S.A.L</button><button class="filter" data-filter="Pneuma">Pneuma</button></div><div id="video-catalog" class="video-grid"><p class="loading">Abriendo el archivo visual…</p></div></details>
     </section>
 
     <section class="chapter family" id="family" data-chapter="06">
-      <div class="family-intro"><div><p class="eyebrow">06 · UNIVERSO 3FR</p><h2>Tres ramas,<br><em>un mismo cauce.</em></h2></div><img src="assets/images/logo-3fr.png" alt="3FR productora musical" class="threefr-logo"></div>
+      <div class="family-intro"><div><p class="eyebrow">06 · UNIVERSO 3FR</p><h2>Tres ramas,<br><em>un mismo cauce.</em></h2></div><img src="assets/images/logo-3fr.png" data-asset="assets/images/logo-3fr.png" alt="3FR productora musical" class="threefr-logo"></div>
       <p class="family-lede">Desde 3FR acompañamos proyectos que necesitan un lugar para crecer: producción, criterio y una escucha atenta.</p>
-      <div class="project-list"><article class="project-row"><span class="project-index">01</span><div><h3>S.A.L</h3><p>Rock alternativo · El Sermón de las 7 palabras</p></div><a href="#videos" class="text-link">Ver obra <span>↗</span></a></article><article class="project-row"><span class="project-index">02</span><div><h3>Pneuma</h3><p>Voces de esperanza · Ana Elizabeth Silva</p></div><a href="#videos" class="text-link">Ver obra <span>↗</span></a></article><article class="project-row"><span class="project-index">03</span><div><h3>Sobreescritura</h3><p>Raíces Eternas · biografía editorial en actualización</p></div><a href="#music" class="text-link">Escuchar <span>↗</span></a></article><article class="project-row"><span class="project-index">04</span><div><h3>Pajarillo e’ Monte</h3><p>Instrumental · ficha editorial en actualización</p></div><a href="#gallery" class="text-link">Explorar <span>↗</span></a></article></div>
+      <div class="project-list"><article class="project-row"><span class="project-index">01</span><div><h3>S.A.L</h3><p>Rock alternativo · El Sermón de las 7 palabras</p></div><a href="#media-video" class="text-link">Ver obra <span>↗</span></a></article><article class="project-row"><span class="project-index">02</span><div><h3>Pneuma</h3><p>Voces de esperanza · Ana Elizabeth Silva</p></div><a href="#media-video" class="text-link">Ver obra <span>↗</span></a></article><article class="project-row"><span class="project-index">03</span><div><h3>Sobreescritura</h3><p>Raíces Eternas · biografía editorial en actualización</p></div><a href="#music" class="text-link">Escuchar <span>↗</span></a></article><article class="project-row"><span class="project-index">04</span><div><h3>Pajarillo e’ Monte</h3><p>Instrumental · ficha editorial en actualización</p></div><a href="#media-gallery" class="text-link">Explorar <span>↗</span></a></article></div>
       <div class="editorial-note"><span>Cuaderno abierto</span><p>Las fichas de Sobreescritura y Pajarillo e’ Monte esperan la voz de sus compositores. El archivo musical ya está disponible.</p></div>
     </section>
 
@@ -156,3 +160,4 @@
   <script src="app.js" defer></script>
 </body>
 </html>
+
