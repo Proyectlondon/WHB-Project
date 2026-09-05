@@ -346,8 +346,12 @@ function renderMedia(catalog) {
 
   $$('[data-media-prev]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex - 1 + items.length) % items.length; update(-1); }));
   $$('[data-media-next]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex + 1) % items.length; update(1); }));
-  $$('[data-gallery-prev]').forEach((button) => button.addEventListener('click', () => { galleryIndex = (galleryIndex - 1 + archive.length) % archive.length; renderGalleryState(); }));
-  $$('[data-gallery-next]').forEach((button) => button.addEventListener('click', () => { galleryIndex = (galleryIndex + 1) % archive.length; renderGalleryState(); }));
+  root.addEventListener('click', (event) => {
+    const previous = event.target.closest('[data-gallery-prev]');
+    const next = event.target.closest('[data-gallery-next]');
+    if (previous) { galleryIndex = (galleryIndex - 1 + archive.length) % archive.length; renderGalleryState(); }
+    if (next) { galleryIndex = (galleryIndex + 1) % archive.length; renderGalleryState(); }
+  });
   thumbs?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-gallery-index]');
     if (!button) return;
