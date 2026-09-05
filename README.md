@@ -22,3 +22,5 @@ Versión nueva de la experiencia web de WHB Project. Esta carpeta no reutiliza e
 La apertura mejorada en Magnific está guardada en `assets/video/hero-whb-2k.mp4` y funciona sin sonido. `assets/video/hero-whb-final.mp4`, `assets/video/hero-whb-smile.mp4` y `assets/video/hero-whb.mp4` quedan como respaldos. No se publica ni se conecta a cuentas externas desde esta fase.
 
 La demo de Vercel conserva las imágenes y el video de apertura en su despliegue; los audios `Radio Version` se solicitan desde el repositorio público para evitar duplicar una carga de más de 250 MB.
+
+La publicación de producción se verifica en https://whb-project.vercel.app/.
