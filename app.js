@@ -22,6 +22,12 @@ const MEDIA_FEATURES = [
   { match: 'Tengo Sed', cover: 'assets/images/poster-tengo-sed.png', copy: 'S.A.L. abre una grieta de rock alternativo para decir lo que arde.' }
 ];
 
+const MEDIA_COVER_FALLBACKS = {
+  'S.A.L': 'assets/images/poster-tengo-sed.png',
+  Pneuma: 'assets/images/poster-senor-escucha.png',
+  'WHB Project': 'assets/images/son-del-monte.jpg'
+};
+
 class AmbientWind {
   constructor() {
     this.context = null;
@@ -252,10 +258,17 @@ function renderMedia(catalog) {
   if (!root) return;
   const videos = catalog.videos || [];
   const archive = catalog.gallery || [];
-  const items = MEDIA_FEATURES.map((feature) => {
+  const featured = MEDIA_FEATURES.map((feature) => {
     const video = videos.find((candidate) => candidate.title === feature.match || candidate.title.includes(feature.match));
     return video ? { ...feature, ...video } : null;
   }).filter(Boolean);
+  const featuredIds = new Set(featured.map((item) => item.id));
+  const remaining = videos.filter((video) => !featuredIds.has(video.id)).map((video) => ({
+    ...video,
+    cover: MEDIA_COVER_FALLBACKS[video.group] || 'assets/images/son-del-monte.jpg',
+    copy: `${video.kind} de ${video.album}. Una pieza más del archivo que sigue respirando.`
+  }));
+  const items = [...featured, ...remaining];
   if (!items.length) return;
 
   let mediaIndex = 0;
@@ -353,6 +366,11 @@ function initHeroOpening() {
     opening.remove();
     return;
   }
+  // Repetir estas propiedades evita que algunos navegadores móviles
+  // interpreten el archivo como una pieza con audio y bloqueen el autoplay.
+  video.muted = true;
+  video.defaultMuted = true;
+  video.autoplay = true;
   let finished = false;
   let started = false;
   const finish = () => {
@@ -368,15 +386,31 @@ function initHeroOpening() {
     if (finished || started) return;
     opening.classList.add('video-fallback');
     opening.querySelector('.hero-opening-kicker')?.replaceChildren(document.createTextNode('WHB Project · La loma está lista'));
+    if (enter) {
+      const label = enter.firstChild;
+      if (label && label.nodeType === Node.TEXT_NODE) label.textContent = 'Reproducir apertura ';
+      enter.setAttribute('aria-label', 'Reproducir apertura');
+    }
   };
   const start = () => {
     if (finished || started) return;
     video.play().then(() => {
       started = true;
       opening.classList.add('is-playing');
+      if (enter) {
+        const label = enter.firstChild;
+        if (label && label.nodeType === Node.TEXT_NODE) label.textContent = 'Entrar al campo ';
+        enter.setAttribute('aria-label', 'Entrar al campo');
+      }
     }).catch(() => keepPoster());
   };
-  enter?.addEventListener('click', finish);
+  enter?.addEventListener('click', () => {
+    if (!started && video.paused) {
+      start();
+      return;
+    }
+    finish();
+  });
   skip?.addEventListener('click', finish);
   video.addEventListener('ended', finish, { once: true });
   video.addEventListener('error', keepPoster, { once: true });
