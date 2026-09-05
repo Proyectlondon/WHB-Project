@@ -43,7 +43,7 @@ const MEDIA_ALBUM_ART = {
 const MEDIA_COVER_FALLBACKS = {
   'S.A.L': { cover: 'assets/images/poster-tengo-sed.png', coverKind: 'Arte del archivo' },
   Pneuma: { cover: 'assets/images/poster-senor-escucha.png', coverKind: 'Arte del archivo' },
-  'WHB Project': { cover: 'assets/images/son-del-monte.jpg', coverKind: 'Arte del archivo' }
+  'WHB Project': { cover: 'assets/images/poster-son-del-monte.png', coverKind: 'Portada oficial' }
 };
 
 function mediaArtwork(video) {
