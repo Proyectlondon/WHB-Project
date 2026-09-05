@@ -17,6 +17,6 @@ Versión nueva de la experiencia web de WHB Project. Esta carpeta no reutiliza e
 - 14 imágenes curadas del archivo entregado.
 - Capítulos separados para historia, integrantes, música, videos, arte, 3FR, servicios y contacto.
 - Producciones de audio plegables con control +/−; la primera se muestra abierta y las demás se pueden abrir a demanda.
+- Títulos, copys y tarjetas entran de forma progresiva al aparecer en pantalla; con reducción de movimiento se muestran sin transición.
 
 La apertura mejorada en Magnific está guardada en `assets/video/hero-whb-2k.mp4` y funciona sin sonido. `assets/video/hero-whb-final.mp4`, `assets/video/hero-whb-smile.mp4` y `assets/video/hero-whb.mp4` quedan como respaldos. No se publica ni se conecta a cuentas externas desde esta fase.
-

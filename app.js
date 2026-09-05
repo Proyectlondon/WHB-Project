@@ -251,6 +251,33 @@ function initNavigation() {
   $$('.chapter').forEach((section) => observer.observe(section));
 }
 
+function initReveal() {
+  // La entrada de textos se activa solo cuando JavaScript está disponible;
+  // así el contenido sigue siendo visible si la animación se desactiva.
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const selectors = [
+    '.hero-copy', '.hero-note', '.scroll-cue',
+    '.chapter .section-intro', '.chapter .section-head', '.chapter .family-intro', '.chapter .contact-main',
+    '.chapter h2', '.chapter h3', '.chapter .lede', '.chapter .pull-quote',
+    '.chapter .story-copy > p', '.chapter .family-lede', '.chapter .contact-main > p',
+    '.chapter .project-row', '.chapter .service-grid article', '.chapter .video-meta', '.chapter .gallery-caption'
+  ];
+  const targets = $$(selectors.join(','));
+  if (!targets.length) return;
+  targets.forEach((element, index) => {
+    element.classList.add('reveal');
+    element.style.setProperty('--reveal-delay', `${Math.min(index % 6, 5) * 70}ms`);
+  });
+  const observer = new IntersectionObserver((entries, instance) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('is-visible');
+      instance.unobserve(entry.target);
+    });
+  }, { threshold: .16, rootMargin: '0px 0px -8% 0px' });
+  targets.forEach((element) => observer.observe(element));
+}
+
 function initCursor() {
   const cursor = $('.cursor-seed');
   if (!cursor || !window.matchMedia('(pointer:fine)').matches) return;
@@ -286,5 +313,5 @@ document.addEventListener('DOMContentLoaded', () => {
     $$('.filter').forEach((item) => item.classList.remove('is-active')); button.classList.add('is-active');
     const response = await fetch('content/catalog.json'); const catalog = await response.json(); renderVideos(catalog.videos || [], button.dataset.filter);
   }));
-  initNavigation(); initCursor(); initHeroOpening(); loadCatalog();
+  initNavigation(); initReveal(); initCursor(); initHeroOpening(); loadCatalog();
 });

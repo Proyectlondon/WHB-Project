@@ -162,3 +162,10 @@ main{position:relative;z-index:2}.chapter{position:relative;min-height:100vh;pad
 .audio-catalog .album-toggle::before{content:"+";transform:translateY(-1px);}
 .audio-catalog .album-block[open] .album-toggle::before{content:"−";}
 .audio-catalog .album-track-list{padding-bottom:11px;}
+
+/* Entrada editorial: títulos y textos aparecen al entrar en escena. */
+.reveal{opacity:0;transform:translate3d(0,24px,0);transition:opacity .8s cubic-bezier(.22,.61,.36,1),transform .8s cubic-bezier(.22,.61,.36,1);transition-delay:var(--reveal-delay,0ms);}
+.reveal.is-visible{opacity:1;transform:none;}
+.chapter h2.reveal,.chapter h3.reveal{transform:translate3d(0,30px,0);}
+.chapter h2.reveal.is-visible,.chapter h3.reveal.is-visible{transform:none;}
+@media (prefers-reduced-motion: reduce){.reveal,.chapter h2.reveal,.chapter h3.reveal{opacity:1;transform:none;transition:none;}}
