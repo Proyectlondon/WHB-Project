@@ -2,9 +2,75 @@ const $ = (selector, scope = document) => scope.querySelector(selector);
 const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
 const PUBLIC_ASSET_BASE = 'https://raw.githubusercontent.com/Proyectlondon/WHB-Project/main/';
 
+function isHostedPreview() {
+  return window.location.protocol === 'https:' || (window.location.protocol === 'http:' && !['localhost', '127.0.0.1'].includes(window.location.hostname));
+}
+
 function assetUrl(path) {
-  if (!path || !window.location.hostname.endsWith('vercel.app')) return path;
+  if (!path || !isHostedPreview()) return path;
   return PUBLIC_ASSET_BASE + path.split('/').map((part) => encodeURIComponent(part)).join('/');
+}
+
+const MEDIA_FEATURES = [
+  { match: '40 Días Después', cover: 'assets/images/40-dias-despues.jpg', copy: 'Una canción para atravesar la espera con la mirada puesta en la promesa.' },
+  { match: 'Astillas Del Olivo', cover: 'assets/images/astillas-del-olivo.jpg', copy: 'Madera, memoria y una voz que encuentra luz en las pequeñas grietas.' },
+  { match: 'Con Tu Espíritu', cover: 'assets/images/con-tu-espiritu.jpg', copy: 'El aire entre las voces: una oración popfolclor que se mueve despacio.' },
+  { match: 'Mi Dios Artesano', cover: 'assets/images/mi-dios-artesano.jpg', copy: 'Una canción sobre el oficio de crear y la presencia que acompaña el camino.' },
+  { match: 'Mi Huertica', cover: 'assets/images/mi-huertica.jpg', copy: 'Una memoria de diciembre que vuelve a sonar con calidez de casa.' },
+  { match: 'Señor Escucha Mi Cantar', cover: 'assets/images/senor-escucha-mi-cantar.jpg', copy: 'La voz se vuelve conversación: pedir, agradecer y seguir cantando.' },
+  { match: 'Zamba del Olivo Verde', cover: 'assets/images/zamba-del-olivo-verde.jpg', copy: 'Una raíz que se mueve entre el folclor, la celebración y la esperanza.' },
+  { match: 'Tengo Sed', cover: 'assets/images/poster-tengo-sed.png', copy: 'S.A.L. abre una grieta de rock alternativo para decir lo que arde.' }
+];
+
+class AmbientWind {
+  constructor() {
+    this.context = null;
+    this.master = null;
+    this.source = null;
+    this.lfo = null;
+    this.lfoGain = null;
+    this.enabled = false;
+  }
+  create() {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return false;
+    this.context = new AudioContext();
+    const length = this.context.sampleRate * 2;
+    const buffer = this.context.createBuffer(1, length, this.context.sampleRate);
+    const data = buffer.getChannelData(0);
+    let last = 0;
+    for (let index = 0; index < length; index += 1) {
+      const white = Math.random() * 2 - 1;
+      last = last * .985 + white * .15;
+      data[index] = last;
+    }
+    this.source = this.context.createBufferSource();
+    this.source.buffer = buffer;
+    this.source.loop = true;
+    const highPass = this.context.createBiquadFilter();
+    highPass.type = 'highpass'; highPass.frequency.value = 90;
+    const lowPass = this.context.createBiquadFilter();
+    lowPass.type = 'lowpass'; lowPass.frequency.value = 780;
+    this.master = this.context.createGain();
+    this.master.gain.value = 0;
+    this.lfo = this.context.createOscillator();
+    this.lfo.frequency.value = .11;
+    this.lfoGain = this.context.createGain();
+    this.lfoGain.gain.value = .012;
+    this.lfo.connect(this.lfoGain).connect(this.master.gain);
+    this.source.connect(highPass).connect(lowPass).connect(this.master).connect(this.context.destination);
+    this.source.start(); this.lfo.start();
+    return true;
+  }
+  setEnabled(enabled) {
+    if (enabled && !this.context && !this.create()) return false;
+    if (!this.context || !this.master) return false;
+    this.enabled = enabled;
+    this.context.resume();
+    this.master.gain.cancelScheduledValues(this.context.currentTime);
+    this.master.gain.setTargetAtTime(enabled ? .045 : 0, this.context.currentTime, .18);
+    return true;
+  }
 }
 
 class WindField {
@@ -181,6 +247,81 @@ function renderGallery(gallery) {
   root.innerHTML = gallery.map((item) => `<figure class="gallery-tile"><img loading="lazy" src="${assetUrl(item.src)}" alt="${item.alt}"><figcaption class="gallery-caption"><span>${item.label}</span><b>${item.title}</b></figcaption></figure>`).join('');
 }
 
+function renderMedia(catalog) {
+  const root = $('#media-stage');
+  if (!root) return;
+  const videos = catalog.videos || [];
+  const archive = catalog.gallery || [];
+  const items = MEDIA_FEATURES.map((feature) => {
+    const video = videos.find((candidate) => candidate.title === feature.match || candidate.title.includes(feature.match));
+    return video ? { ...feature, ...video } : null;
+  }).filter(Boolean);
+  if (!items.length) return;
+
+  let mediaIndex = 0;
+  let galleryIndex = 0;
+  let transitionTimer;
+  const cover = $('#media-cover');
+  const album = $('#media-album');
+  const group = $('#media-group');
+  const title = $('#media-title');
+  const copy = $('#media-copy');
+  const kind = $('#media-kind');
+  const frame = $('#media-player');
+  const galleryImage = $('#media-gallery-image');
+  const galleryCaption = $('#media-gallery-caption');
+  const thumbs = $('#media-gallery-thumbs');
+  const index = $('#media-index');
+  const total = $('#media-total');
+
+  const renderGalleryThumbs = () => {
+    if (!thumbs) return;
+    thumbs.innerHTML = archive.slice(0, 6).map((item, itemIndex) => `<button class="media-thumb${itemIndex === galleryIndex ? ' is-active' : ''}" type="button" data-gallery-index="${itemIndex}" aria-label="Ver imagen ${itemIndex + 1}"><img loading="lazy" src="${assetUrl(item.src)}" alt=""></button>`).join('');
+  };
+
+  const update = (direction = 0) => {
+    const item = items[mediaIndex];
+    if (direction && root) {
+      root.classList.remove('is-transitioning');
+      window.requestAnimationFrame(() => root.classList.add('is-transitioning'));
+      window.clearTimeout(transitionTimer);
+      transitionTimer = window.setTimeout(() => root.classList.remove('is-transitioning'), 520);
+    }
+    if (cover) { cover.src = assetUrl(item.cover); cover.alt = `Portada de ${item.title}`; }
+    if (album) album.textContent = item.album;
+    if (group) group.textContent = item.group;
+    if (title) title.textContent = item.title;
+    if (copy) copy.textContent = item.copy;
+    if (kind) kind.textContent = item.kind;
+    if (frame) frame.innerHTML = `<iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${item.id}?rel=0" title="${item.title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+    if (index) index.textContent = String(mediaIndex + 1).padStart(2, '0');
+    if (total) total.textContent = String(items.length).padStart(2, '0');
+    if (archive.length) {
+      const image = archive[galleryIndex % archive.length];
+      if (galleryImage) { galleryImage.src = assetUrl(image.src); galleryImage.alt = image.alt; }
+      if (galleryCaption) galleryCaption.textContent = `${image.label} · ${image.title}`;
+      renderGalleryThumbs();
+    }
+  };
+
+  $$('[data-media-prev]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex - 1 + items.length) % items.length; update(-1); }));
+  $$('[data-media-next]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex + 1) % items.length; update(1); }));
+  $$('[data-gallery-prev]').forEach((button) => button.addEventListener('click', () => { galleryIndex = (galleryIndex - 1 + archive.length) % archive.length; update(0); }));
+  $$('[data-gallery-next]').forEach((button) => button.addEventListener('click', () => { galleryIndex = (galleryIndex + 1) % archive.length; update(0); }));
+  thumbs?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-gallery-index]');
+    if (!button) return;
+    galleryIndex = Number(button.dataset.galleryIndex) || 0;
+    update(0);
+  });
+  root.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowRight') { mediaIndex = (mediaIndex + 1) % items.length; update(1); }
+    if (event.key === 'ArrowLeft') { mediaIndex = (mediaIndex - 1 + items.length) % items.length; update(-1); }
+  });
+  root.tabIndex = 0;
+  update();
+}
+
 async function loadCatalog() {
   try {
     const response = await fetch('content/catalog.json');
@@ -189,6 +330,7 @@ async function loadCatalog() {
     renderAudio(catalog.audio || []);
     renderVideos(catalog.videos || []);
     renderGallery(catalog.gallery || []);
+    renderMedia(catalog);
   } catch (error) {
     console.warn('No se pudo cargar el catálogo.', error);
     $$('.loading').forEach((node) => { node.textContent = 'El archivo estará disponible en cuanto se conecte la fuente.'; });
@@ -212,6 +354,7 @@ function initHeroOpening() {
     return;
   }
   let finished = false;
+  let started = false;
   const finish = () => {
     if (finished) return;
     finished = true;
@@ -221,13 +364,39 @@ function initHeroOpening() {
     opening.setAttribute('inert', '');
     window.setTimeout(() => video.pause(), 900);
   };
+  const keepPoster = () => {
+    if (finished || started) return;
+    opening.classList.add('video-fallback');
+    opening.querySelector('.hero-opening-kicker')?.replaceChildren(document.createTextNode('WHB Project · La loma está lista'));
+  };
+  const start = () => {
+    if (finished || started) return;
+    video.play().then(() => {
+      started = true;
+      opening.classList.add('is-playing');
+    }).catch(() => keepPoster());
+  };
   enter?.addEventListener('click', finish);
   skip?.addEventListener('click', finish);
   video.addEventListener('ended', finish, { once: true });
-  video.addEventListener('error', finish, { once: true });
+  video.addEventListener('error', keepPoster, { once: true });
+  video.addEventListener('canplay', start, { once: true });
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape') finish(); }, { passive: true });
-  window.setTimeout(finish, 8600);
-  video.play().catch(() => finish(false));
+  window.setTimeout(() => { if (!started && !finished) keepPoster(); }, 2600);
+  if (video.readyState >= 3) start();
+}
+
+function initRemoteStaticAssets() {
+  if (!isHostedPreview()) return;
+  $$('[data-asset]').forEach((element) => {
+    const path = element.dataset.asset;
+    if (path) element.setAttribute('src', assetUrl(path));
+  });
+  $$('[data-asset-poster]').forEach((element) => {
+    const path = element.dataset.assetPoster;
+    if (path) element.setAttribute('poster', assetUrl(path));
+  });
+  $('#hero-video')?.load();
 }
 
 function initNavigation() {
@@ -246,15 +415,18 @@ function initNavigation() {
     if (event.key === 'Escape') { nav?.classList.remove('is-open'); toggle?.setAttribute('aria-expanded', 'false'); }
   });
   const links = $$('.chapter-nav a');
+  const navigationTargets = $$('.chapter, [data-nav-anchor]');
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
-      links.forEach((link) => link.classList.toggle('is-active', link.dataset.section === entry.target.id));
+      const sectionId = entry.target.dataset.navAnchor || entry.target.id;
+      links.forEach((link) => link.classList.toggle('is-active', link.dataset.section === sectionId));
       const seasons = ['spring', 'summer', 'autumn', 'winter'];
-      document.body.dataset.season = seasons[Number(entry.target.dataset.chapter || 0) % seasons.length];
+      const chapter = entry.target.dataset.chapter || entry.target.closest('.chapter')?.dataset.chapter || 0;
+      document.body.dataset.season = seasons[Number(chapter) % seasons.length];
     });
   }, { threshold: .45 });
-  $$('.chapter').forEach((section) => observer.observe(section));
+  navigationTargets.forEach((section) => observer.observe(section));
 }
 
 function initReveal() {
@@ -307,17 +479,22 @@ function initCursor() {
 document.addEventListener('DOMContentLoaded', () => {
   const wind = new WindField($('#windfield'));
   const windFront = new WindField($('#windfield-front'), true);
+  const ambient = new AmbientWind();
   const toggle = $('.sound-toggle');
   toggle?.addEventListener('click', () => {
     const pressed = toggle.getAttribute('aria-pressed') === 'true';
-    toggle.setAttribute('aria-pressed', String(!pressed));
-    wind.setCalm(!pressed);
-    windFront.setCalm(!pressed);
-    toggle.querySelector('span:last-child').textContent = !pressed ? 'Calma' : 'Ambiente';
+    const enabled = !pressed;
+    const activated = ambient.setEnabled(enabled);
+    if (!activated && enabled) return;
+    toggle.setAttribute('aria-pressed', String(enabled));
+    wind.setCalm(enabled);
+    windFront.setCalm(enabled);
+    toggle.querySelector('span:last-child').textContent = enabled ? 'Ambiente activo' : 'Ambiente';
   });
   $$('.filter').forEach((button) => button.addEventListener('click', async () => {
     $$('.filter').forEach((item) => item.classList.remove('is-active')); button.classList.add('is-active');
     const response = await fetch('content/catalog.json'); const catalog = await response.json(); renderVideos(catalog.videos || [], button.dataset.filter);
   }));
-  initNavigation(); initReveal(); initCursor(); initHeroOpening(); loadCatalog();
+  initNavigation(); initReveal(); initCursor(); initRemoteStaticAssets(); initHeroOpening(); loadCatalog();
 });
+
