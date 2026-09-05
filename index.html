@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a1b16">
+  <meta name="description" content="WHB Project — música popfolclor nacida entre Bogotá, la montaña y la esperanza.">
+  <title>WHB Project — Campo de aliento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="prelude" aria-hidden="true"><span></span></div>
+  <div class="hero-opening" id="hero-opening" role="dialog" aria-modal="true" aria-label="Apertura de Campo de aliento">
+      <video id="hero-video" class="hero-opening-video" muted playsinline preload="auto" poster="assets/images/hero-whb-poster.jpg">
+        <source src="assets/video/hero-whb-2k.mp4" type="video/mp4">
+      </video>
+    <div class="hero-opening-shade" aria-hidden="true"></div>
+    <div class="hero-opening-ui">
+      <div class="hero-opening-copy">
+        <span class="hero-opening-kicker">WHB Project · Apertura</span>
+        <h2>Entra al<br><em>Campo de aliento.</em></h2>
+      </div>
+      <div class="hero-opening-actions">
+        <button id="hero-enter" type="button">Entrar al campo <span>↘</span></button>
+        <button id="hero-skip" class="hero-skip" type="button">Saltar introducción</button>
+      </div>
+    </div>
+  </div>
+  <canvas id="windfield" aria-hidden="true"></canvas>
+  <canvas id="windfield-front" aria-hidden="true"></canvas>
+  <div class="mist mist-one" aria-hidden="true"></div>
+  <div class="mist mist-two" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#arrival" aria-label="WHB Project, inicio">
+      <span class="brand-mark">WHB</span><span class="brand-name">Project</span>
+    </a>
+    <div class="topbar-right">
+      <span class="location">Bogotá · Tocancipá · Cali</span>
+      <button class="sound-toggle" type="button" aria-pressed="false"><span class="sound-dot"></span><span>Ambiente</span></button>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="chapter-nav">Menú</button>
+    </div>
+  </header>
+
+  <nav class="chapter-nav" id="chapter-nav" aria-label="Capítulos de la página">
+    <a href="#arrival" data-section="arrival"><span>00</span> Llegada</a>
+    <a href="#story" data-section="story"><span>01</span> Historia</a>
+    <a href="#members" data-section="members"><span>02</span> Integrantes</a>
+    <a href="#music" data-section="music"><span>03</span> Música</a>
+    <a href="#videos" data-section="videos"><span>04</span> Videos</a>
+    <a href="#gallery" data-section="gallery"><span>05</span> Arte</a>
+    <a href="#family" data-section="family"><span>06</span> Universo 3FR</a>
+    <a href="#services" data-section="services"><span>07</span> Servicios</a>
+    <a href="#contact" data-section="contact"><span>08</span> Contacto</a>
+  </nav>
+
+  <main>
+    <section class="chapter hero" id="arrival" data-chapter="00">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="eyebrow-line"></span> WHISPERING HIS BREATH <span>·</span> 2017</p>
+        <h1>El aliento<br><em>despierta</em><br>la montaña.</h1>
+        <p class="lede">Música popfolclor nacida entre memoria, madera y esperanza. Una canción puede empezar con el susurro de una semilla.</p>
+        <div class="hero-actions">
+          <a class="button button-light" href="#music">Escuchar la loma <span>↘</span></a>
+          <a class="button button-quiet" href="#story">Conocer el proyecto <span>↘</span></a>
+        </div>
+      </div>
+      <div class="hero-note"><span class="note-index">00</span><span>Acércate<br>sin prisa.</span></div>
+      <div class="scroll-cue"><span class="scroll-line"></span> Desplázate para entrar</div>
+    </section>
+
+    <section class="chapter story" id="story" data-chapter="01">
+      <div class="section-intro">
+        <p class="eyebrow">01 · LA RAÍZ</p>
+        <h2>Una voz que<br><em>viene de lejos.</em></h2>
+      </div>
+      <div class="story-grid">
+        <figure class="image-frame tall-frame"><img src="assets/images/herencia-espiritual.jpg" alt="Arte de Herencia Espiritual de WHB Project"><figcaption>Herencia espiritual · archivo WHB</figcaption></figure>
+        <div class="story-copy">
+          <p class="pull-quote">“Whispering His Breath” significa susurrando su aliento: una imagen para la fe que se mueve, aunque no siempre se vea.</p>
+          <p>WHB Project nació en Bogotá–Cundinamarca en 2017. Desde entonces escribimos canciones que cruzan el pop, el folclor colombiano y una mirada cristocéntrica abierta a todo público.</p>
+          <p>Hoy la loma también se extiende hasta Tocancipá y Cali. Cambiamos de escenario, no de raíz: seguimos buscando una forma honesta de cantar lo que nos sostiene.</p>
+          <a class="text-link" href="#members">Conocer a quienes la sostienen <span>↗</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="chapter members" id="members" data-chapter="02">
+      <div class="section-intro narrow">
+        <p class="eyebrow">02 · QUIÉNES SOMOS</p>
+        <h2>La banda es un<br><em>lugar compartido.</em></h2>
+        <p>Fundadores, amigos y nuevas voces. La formación se mueve con la vida, pero el proyecto sigue respirando.</p>
+      </div>
+      <div class="member-board">
+        <div class="member-column"><p class="column-label">Fundadores · activos</p><div class="member-card"><b>Jhon Londoño</b><span>Voz · composición · guitarra · percusión menor</span></div><div class="member-card"><b>Daniel Silva</b><span>Compositor principal · voz · producción</span></div><div class="member-card"><b>Gerson Morales</b><span>Productor musical · batería · percusión · captación · mezcla y masterización</span></div></div>
+        <div class="member-column"><p class="column-label">La formación 2026</p><div class="member-card"><b>Diego Robayo</b><span>Guitarra secundaria · coro secundario</span></div><div class="member-card"><b>Camilo Salinas</b><span>Bajo · coro ocasional</span></div><div class="member-card"><b>Andrés</b><span>Batería</span></div><div class="member-card"><b>Lore</b><span>Voz</span></div></div>
+        <div class="member-column"><p class="column-label">Familia extendida</p><div class="member-card"><b>Ana Elizabeth Silva <small>Anita</small></b><span>Voz · piano · cabeza de Pneuma</span></div><div class="member-card"><b>Wilson Pedroza</b><span>Guitarra · participación desde Cali</span></div><div class="member-card historical"><b>René</b><span>Integrante histórico</span></div></div>
+      </div>
+    </section>
+
+    <section class="chapter music" id="music" data-chapter="03">
+      <div class="section-head"><div><p class="eyebrow">03 · LA MÚSICA</p><h2>Volver a la<br><em>loma.</em></h2></div><div class="section-stat"><strong id="audio-count">—</strong><span>Radio Versions<br>para escuchar aquí</span></div></div>
+      <div class="music-layout"><div id="audio-catalog" class="audio-catalog"><p class="loading">Cargando el archivo sonoro…</p></div><aside class="listen-aside"><img src="assets/images/son-del-monte.jpg" alt="WHB Project, Son del Monte"><div class="aside-copy"><p class="eyebrow">CATÁLOGO COMPLETO</p><h3>La música también<br>vive fuera de Spotify.</h3><p>Escucha las Radio Version directamente aquí o abre la plataforma que ya usas.</p><div class="aside-links"><a class="button button-light" href="https://open.spotify.com/artist/3Ban3jhZSeynTDAlZweSIp" target="_blank" rel="noreferrer">Spotify ↗</a><a class="text-link" href="#videos">Ver videoclips <span>↘</span></a></div></div></aside></div>
+    </section>
+
+    <section class="chapter videos" id="videos" data-chapter="04">
+      <div class="section-head"><div><p class="eyebrow">04 · IMAGEN EN MOVIMIENTO</p><h2>Las canciones<br><em>toman cuerpo.</em></h2></div><p class="section-note">Videos oficiales, visualizers y sesiones publicados en YouTube. Reproducibles sin abandonar esta página.</p></div>
+      <div class="filter-row" role="group" aria-label="Filtrar videos"><button class="filter is-active" data-filter="all">Todos</button><button class="filter" data-filter="WHB Project">WHB Project</button><button class="filter" data-filter="S.A.L">S.A.L</button><button class="filter" data-filter="Pneuma">Pneuma</button></div>
+      <div id="video-catalog" class="video-grid"><p class="loading">Abriendo el archivo visual…</p></div>
+    </section>
+
+    <section class="chapter gallery" id="gallery" data-chapter="05">
+      <div class="section-head"><div><p class="eyebrow">05 · EL ARTE DE LA LOMA</p><h2>Lo que queda<br><em>cuando suena.</em></h2></div><p class="section-note">Portadas, posters y momentos que forman la memoria visual del proyecto.</p></div>
+      <div id="gallery-grid" class="gallery-grid"><p class="loading">Revelando el archivo…</p></div>
+    </section>
+
+    <section class="chapter family" id="family" data-chapter="06">
+      <div class="family-intro"><div><p class="eyebrow">06 · UNIVERSO 3FR</p><h2>Tres ramas,<br><em>un mismo cauce.</em></h2></div><img src="assets/images/logo-3fr.png" alt="3FR productora musical" class="threefr-logo"></div>
+      <p class="family-lede">Desde 3FR acompañamos proyectos que necesitan un lugar para crecer: producción, criterio y una escucha atenta.</p>
+      <div class="project-list"><article class="project-row"><span class="project-index">01</span><div><h3>S.A.L</h3><p>Rock alternativo · El Sermón de las 7 palabras</p></div><a href="#videos" class="text-link">Ver obra <span>↗</span></a></article><article class="project-row"><span class="project-index">02</span><div><h3>Pneuma</h3><p>Voces de esperanza · Ana Elizabeth Silva</p></div><a href="#videos" class="text-link">Ver obra <span>↗</span></a></article><article class="project-row"><span class="project-index">03</span><div><h3>Sobreescritura</h3><p>Raíces Eternas · biografía editorial en actualización</p></div><a href="#music" class="text-link">Escuchar <span>↗</span></a></article><article class="project-row"><span class="project-index">04</span><div><h3>Pajarillo e’ Monte</h3><p>Instrumental · ficha editorial en actualización</p></div><a href="#gallery" class="text-link">Explorar <span>↗</span></a></article></div>
+      <div class="editorial-note"><span>Cuaderno abierto</span><p>Las fichas de Sobreescritura y Pajarillo e’ Monte esperan la voz de sus compositores. El archivo musical ya está disponible.</p></div>
+    </section>
+
+    <section class="chapter services" id="services" data-chapter="07">
+      <div class="section-intro narrow"><p class="eyebrow">07 · SERVICIOS 3FR</p><h2>Hacer que una<br><em>idea respire.</em></h2><p>Trabajamos con artistas y equipos que buscan una producción honesta, clara y técnicamente sólida.</p></div>
+      <div class="service-grid"><article><span class="service-no">01</span><h3>Consultoría<br>musical</h3><p>Dirección de proyecto, repertorio y decisiones para que la intención llegue completa.</p></article><article><span class="service-no">02</span><h3>Producción<br>y grabación</h3><p>Preproducción, sesiones y acompañamiento desde la primera maqueta hasta la toma final.</p></article><article><span class="service-no">03</span><h3>Mezcla<br>y masterización</h3><p>Un acabado que conserva la identidad y encuentra su lugar en cada plataforma.</p></article></div>
+      <a class="button button-light service-cta" href="#contact">Hablemos de tu proyecto <span>↘</span></a>
+    </section>
+
+    <section class="chapter contact" id="contact" data-chapter="08">
+      <div class="contact-main"><p class="eyebrow">08 · EL SIGUIENTE ALIENTO</p><h2>¿Nos<br><em>encontramos?</em></h2><p>Invítanos a tocar, a producir o a escuchar contigo la canción que está buscando su forma.</p><a class="mail-link" href="mailto:whbprojectmusic@gmail.com">whbprojectmusic@gmail.com <span>↗</span></a></div>
+      <div class="contact-footer"><div class="social-links"><a href="https://www.youtube.com/@Whbprojectmusic" target="_blank" rel="noreferrer">YouTube</a><a href="https://open.spotify.com/artist/3Ban3jhZSeynTDAlZweSIp" target="_blank" rel="noreferrer">Spotify</a><a href="https://www.instagram.com/whbproject" target="_blank" rel="noreferrer">Instagram</a></div><span>WHB Project · Bogotá / Tocancipá / Cali</span></div>
+    </section>
+  </main>
+
+  <div class="cursor-seed" aria-hidden="true">
+    <svg class="cursor-leaf-vector" viewBox="0 0 120 170" aria-hidden="true">
+      <defs>
+        <linearGradient id="cursorLeafFill" x1="12" y1="8" x2="100" y2="144" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="currentColor" stop-opacity=".98"/>
+          <stop offset=".2" stop-color="currentColor" stop-opacity=".9"/>
+          <stop offset="1" stop-color="currentColor" stop-opacity=".7"/>
+        </linearGradient>
+      </defs>
+      <path class="cursor-leaf-body" d="M8 8C27 14 57 27 81 47c22 18 31 40 29 64-2 20-13 37-28 51-21-1-41-9-56-23C11 122 5 96 6 68 7 42 7 21 8 8Z" fill="url(#cursorLeafFill)"/>
+      <path class="cursor-leaf-rim" d="M8 8C27 14 57 27 81 47c22 18 31 40 29 64-2 20-13 37-28 51-21-1-41-9-56-23C11 122 5 96 6 68 7 42 7 21 8 8Z"/>
+      <path class="cursor-leaf-vein" d="M9 10C28 33 49 62 65 88c13 21 20 39 24 61"/>
+      <path class="cursor-leaf-vein cursor-leaf-vein-soft" d="M22 30C31 30 39 34 48 40M31 47C43 46 53 49 63 56M41 65C54 64 66 68 76 76M51 84C64 84 77 89 86 98M60 103C74 104 84 109 92 117M68 121C79 123 86 128 91 133"/>
+      <path class="cursor-leaf-stem" d="M88 148c8 6 15 11 23 14"/>
+    </svg>
+    <span></span>
+  </div>
+  <script src="app.js" defer></script>
+</body>
+</html>

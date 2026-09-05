@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 170" role="img" aria-label="Hoja semilla">
+  <defs>
+    <linearGradient id="leafFill" x1="12" y1="8" x2="100" y2="144" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e0c875" stop-opacity=".92"/>
+      <stop offset=".18" stop-color="#b8c99b" stop-opacity=".98"/>
+      <stop offset=".72" stop-color="#6e8a5d" stop-opacity=".98"/>
+      <stop offset="1" stop-color="#345a43" stop-opacity=".98"/>
+    </linearGradient>
+  </defs>
+  <!-- Tip upper-left: this point is aligned with the pointer hotspot. -->
+  <path class="cursor-leaf-body" d="M8 8C27 14 57 27 81 47c22 18 31 40 29 64-2 20-13 37-28 51-21-1-41-9-56-23C11 122 5 96 6 68 7 42 7 21 8 8Z" fill="url(#leafFill)"/>
+  <path class="cursor-leaf-rim" d="M8 8C27 14 57 27 81 47c22 18 31 40 29 64-2 20-13 37-28 51-21-1-41-9-56-23C11 122 5 96 6 68 7 42 7 21 8 8Z"/>
+  <path class="cursor-leaf-vein" d="M9 10C28 33 49 62 65 88c13 21 20 39 24 61"/>
+  <path class="cursor-leaf-vein cursor-leaf-vein-soft" d="M22 30C31 30 39 34 48 40M31 47C43 46 53 49 63 56M41 65C54 64 66 68 76 76M51 84C64 84 77 89 86 98M60 103C74 104 84 109 92 117M68 121C79 123 86 128 91 133"/>
+  <path class="cursor-leaf-stem" d="M88 148c8 6 15 11 23 14"/>
+</svg>
