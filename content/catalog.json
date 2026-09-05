@@ -85,6 +85,10 @@
     {"src":"assets/images/photo-live-02.jpg","alt":"WHB Project durante una presentación","label":"Archivo · Presentación","title":"El pulso del encuentro"},
     {"src":"assets/images/photo-live-03.jpg","alt":"WHB Project en sesión","label":"Archivo · Sesión","title":"Escuchar primero"},
     {"src":"assets/images/photo-live-04.jpg","alt":"WHB Project en concierto","label":"Archivo · Concierto","title":"La montaña responde"},
-    {"src":"assets/images/poster-tengo-sed.png","alt":"Poster de Tengo Sed de S.A.L","label":"S.A.L · Tengo Sed","title":"Una voz que despierta"}
+    {"src":"assets/images/poster-tengo-sed.png","alt":"Poster de Tengo Sed de S.A.L","label":"S.A.L · Tengo Sed","title":"Una voz que despierta"},
+    {"src":"assets/images/complementary/whb-fundamentales-complementary.png","alt":"Arte complementario de Fundamentales Desde La Loma Vol. 1","label":"Arte complementario · Fundamentales Desde La Loma Vol. 1","title":"La loma guarda el pulso"},
+    {"src":"assets/images/complementary/sal-sermon-complementary.png","alt":"Arte complementario de El Sermón de las 7 palabras · S.A.L","label":"Arte complementario · S.A.L","title":"Siete luces en la madera"},
+    {"src":"assets/images/complementary/pneuma-suspiros-complementary.png","alt":"Arte complementario de Suspiros de Esperanza · Pneuma","label":"Arte complementario · Pneuma","title":"El aire sostiene la esperanza"}
   ]
 }
+

@@ -178,6 +178,7 @@ main{position:relative;z-index:2}.chapter{position:relative;min-height:100vh;pad
 .media-cover-frame{margin:0;max-width:430px;}
 .media-cover-frame img{display:block;width:100%;aspect-ratio:1;object-fit:cover;filter:saturate(.78) contrast(.98);box-shadow:18px 22px 0 rgba(214,156,45,.12);}
 .media-cover-frame figcaption{display:flex;justify-content:space-between;gap:18px;margin-top:16px;color:var(--muted);font:500 9px var(--mono);letter-spacing:.1em;text-transform:uppercase;}
+.media-cover-note{display:block;margin-top:9px;color:rgba(238,227,205,.52);font:500 9px var(--mono);letter-spacing:.1em;text-transform:uppercase;}
 .media-cover-frame figcaption span:last-child{text-align:right;color:var(--gold);}
 .media-song-copy{max-width:520px;}
 .media-song-copy h3{font:500 clamp(48px,7vw,96px)/.9 var(--serif);letter-spacing:-.05em;margin:0 0 25px;}

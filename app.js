@@ -12,21 +12,43 @@ function assetUrl(path) {
 }
 
 const MEDIA_FEATURES = [
-  { match: '40 Días Después', cover: 'assets/images/40-dias-despues.jpg', copy: 'Una canción para atravesar la espera con la mirada puesta en la promesa.' },
-  { match: 'Astillas Del Olivo', cover: 'assets/images/astillas-del-olivo.jpg', copy: 'Madera, memoria y una voz que encuentra luz en las pequeñas grietas.' },
-  { match: 'Con Tu Espíritu', cover: 'assets/images/con-tu-espiritu.jpg', copy: 'El aire entre las voces: una oración popfolclor que se mueve despacio.' },
-  { match: 'Mi Dios Artesano', cover: 'assets/images/mi-dios-artesano.jpg', copy: 'Una canción sobre el oficio de crear y la presencia que acompaña el camino.' },
-  { match: 'Mi Huertica', cover: 'assets/images/mi-huertica.jpg', copy: 'Una memoria de diciembre que vuelve a sonar con calidez de casa.' },
-  { match: 'Señor Escucha Mi Cantar', cover: 'assets/images/senor-escucha-mi-cantar.jpg', copy: 'La voz se vuelve conversación: pedir, agradecer y seguir cantando.' },
-  { match: 'Zamba del Olivo Verde', cover: 'assets/images/zamba-del-olivo-verde.jpg', copy: 'Una raíz que se mueve entre el folclor, la celebración y la esperanza.' },
-  { match: 'Tengo Sed', cover: 'assets/images/poster-tengo-sed.png', copy: 'S.A.L. abre una grieta de rock alternativo para decir lo que arde.' }
+  { match: '40 Días Después', cover: 'assets/images/40-dias-despues.jpg', coverKind: 'Arte del archivo', copy: 'Una canción para atravesar la espera con la mirada puesta en la promesa.' },
+  { match: 'Astillas Del Olivo', cover: 'assets/images/astillas-del-olivo.jpg', coverKind: 'Arte del archivo', copy: 'Madera, memoria y una voz que encuentra luz en las pequeñas grietas.' },
+  { match: 'Con Tu Espíritu', cover: 'assets/images/con-tu-espiritu.jpg', coverKind: 'Arte del archivo', copy: 'El aire entre las voces: una oración popfolclor que se mueve despacio.' },
+  { match: 'Mi Dios Artesano', cover: 'assets/images/mi-dios-artesano.jpg', coverKind: 'Arte del archivo', copy: 'Una canción sobre el oficio de crear y la presencia que acompaña el camino.' },
+  { match: 'Mi Huertica', cover: 'assets/images/mi-huertica.jpg', coverKind: 'Arte del archivo', copy: 'Una memoria de diciembre que vuelve a sonar con calidez de casa.' },
+  { match: 'Señor Escucha Mi Cantar', cover: 'assets/images/senor-escucha-mi-cantar.jpg', coverKind: 'Arte del archivo', copy: 'La voz se vuelve conversación: pedir, agradecer y seguir cantando.' },
+  { match: 'Zamba del Olivo Verde', cover: 'assets/images/zamba-del-olivo-verde.jpg', coverKind: 'Arte del archivo', copy: 'Una raíz que se mueve entre el folclor, la celebración y la esperanza.' },
+  { match: 'Tengo Sed', cover: 'assets/images/poster-tengo-sed.png', coverKind: 'Arte del archivo', copy: 'S.A.L. abre una grieta de rock alternativo para decir lo que arde.' }
 ];
 
-const MEDIA_COVER_FALLBACKS = {
-  'S.A.L': 'assets/images/poster-tengo-sed.png',
-  Pneuma: 'assets/images/poster-senor-escucha.png',
-  'WHB Project': 'assets/images/son-del-monte.jpg'
+const MEDIA_ALBUM_ART = {
+  'Fundamentales Desde La Loma Vol. 1': {
+    cover: 'assets/images/complementary/whb-fundamentales-complementary.png',
+    coverKind: 'Arte complementario',
+    coverAlt: 'Arte complementario de Fundamentales Desde La Loma Vol. 1'
+  },
+  'El Sermón de las 7 palabras': {
+    cover: 'assets/images/complementary/sal-sermon-complementary.png',
+    coverKind: 'Arte complementario',
+    coverAlt: 'Arte complementario de El Sermón de las 7 palabras · S.A.L'
+  },
+  'Suspiros de Esperanza': {
+    cover: 'assets/images/complementary/pneuma-suspiros-complementary.png',
+    coverKind: 'Arte complementario',
+    coverAlt: 'Arte complementario de Suspiros de Esperanza · Pneuma'
+  }
 };
+
+const MEDIA_COVER_FALLBACKS = {
+  'S.A.L': { cover: 'assets/images/poster-tengo-sed.png', coverKind: 'Arte del archivo' },
+  Pneuma: { cover: 'assets/images/poster-senor-escucha.png', coverKind: 'Arte del archivo' },
+  'WHB Project': { cover: 'assets/images/son-del-monte.jpg', coverKind: 'Arte del archivo' }
+};
+
+function mediaArtwork(video) {
+  return MEDIA_ALBUM_ART[video.album] || MEDIA_COVER_FALLBACKS[video.group] || { cover: 'assets/images/son-del-monte.jpg', coverKind: 'Arte del archivo' };
+}
 
 class AmbientWind {
   constructor() {
@@ -265,7 +287,7 @@ function renderMedia(catalog) {
   const featuredIds = new Set(featured.map((item) => item.id));
   const remaining = videos.filter((video) => !featuredIds.has(video.id)).map((video) => ({
     ...video,
-    cover: MEDIA_COVER_FALLBACKS[video.group] || 'assets/images/son-del-monte.jpg',
+    ...mediaArtwork(video),
     copy: `${video.kind} de ${video.album}. Una pieza más del archivo que sigue respirando.`
   }));
   const items = [...featured, ...remaining];
@@ -284,6 +306,7 @@ function renderMedia(catalog) {
   const galleryImage = $('#media-gallery-image');
   const galleryCaption = $('#media-gallery-caption');
   const thumbs = $('#media-gallery-thumbs');
+  const coverNote = $('#media-cover-note');
   const index = $('#media-index');
   const total = $('#media-total');
 
@@ -300,7 +323,8 @@ function renderMedia(catalog) {
       window.clearTimeout(transitionTimer);
       transitionTimer = window.setTimeout(() => root.classList.remove('is-transitioning'), 520);
     }
-    if (cover) { cover.src = assetUrl(item.cover); cover.alt = `Portada de ${item.title}`; }
+    if (cover) { cover.src = assetUrl(item.cover); cover.alt = item.coverAlt || `Arte de ${item.album} · ${item.title}`; }
+    if (coverNote) coverNote.textContent = item.coverKind || 'Arte del archivo';
     if (album) album.textContent = item.album;
     if (group) group.textContent = item.group;
     if (title) title.textContent = item.title;
