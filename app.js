@@ -361,8 +361,20 @@ function renderMedia(catalog) {
 
   const update = (direction = 0) => {
     const item = items[mediaIndex];
+    const shell = $('.media-song-shell', root);
     if (direction && root) {
       root.classList.remove('is-transitioning');
+      if (shell) {
+        const outgoing = shell.cloneNode(true);
+        outgoing.removeAttribute('id');
+        outgoing.querySelectorAll('[id]').forEach((node) => node.removeAttribute('id'));
+        outgoing.classList.add('carousel-clone', direction > 0 ? 'is-carousel-out-next' : 'is-carousel-out-prev');
+        root.insertBefore(outgoing, shell);
+        window.setTimeout(() => outgoing.remove(), 620);
+        shell.classList.remove('is-carousel-enter-next', 'is-carousel-enter-prev');
+        window.requestAnimationFrame(() => shell.classList.add(direction > 0 ? 'is-carousel-enter-next' : 'is-carousel-enter-prev'));
+        window.setTimeout(() => shell.classList.remove('is-carousel-enter-next', 'is-carousel-enter-prev'), 620);
+      }
       window.requestAnimationFrame(() => root.classList.add('is-transitioning'));
       window.clearTimeout(transitionTimer);
       transitionTimer = window.setTimeout(() => root.classList.remove('is-transitioning'), 520);
