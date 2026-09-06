@@ -175,15 +175,6 @@ main{position:relative;z-index:2}.chapter{position:relative;min-height:100vh;pad
 .media-archive-head{margin-bottom:52px;}
 .media-stage{position:relative;outline:none;}
 .media-song-shell{display:grid;grid-template-columns:minmax(260px,430px) minmax(280px,1fr);gap:clamp(42px,8vw,130px);align-items:center;padding-bottom:58px;border-bottom:1px solid var(--line);touch-action:pan-y;}
-.media-song-shell.carousel-clone{position:absolute;inset:0;z-index:2;pointer-events:none;background:inherit;}
-.media-song-shell.is-carousel-enter-next{animation:carouselEnterNext .58s cubic-bezier(.22,.61,.36,1) both;}
-.media-song-shell.is-carousel-enter-prev{animation:carouselEnterPrev .58s cubic-bezier(.22,.61,.36,1) both;}
-.media-song-shell.is-carousel-out-next{animation:carouselOutNext .58s cubic-bezier(.22,.61,.36,1) both;}
-.media-song-shell.is-carousel-out-prev{animation:carouselOutPrev .58s cubic-bezier(.22,.61,.36,1) both;}
-@keyframes carouselEnterNext{from{opacity:.45;transform:translate3d(8%,0,0)}to{opacity:1;transform:none}}
-@keyframes carouselEnterPrev{from{opacity:.45;transform:translate3d(-8%,0,0)}to{opacity:1;transform:none}}
-@keyframes carouselOutNext{from{opacity:1;transform:none}to{opacity:.15;transform:translate3d(-8%,0,0)}}
-@keyframes carouselOutPrev{from{opacity:1;transform:none}to{opacity:.15;transform:translate3d(8%,0,0)}}
 .media-song-shell.is-swipe-active{transform:scale(.995);transition:transform .16s ease-out;}
 .media-cover-frame{margin:0;max-width:430px;}
 .media-cover-frame img{display:block;width:100%;aspect-ratio:1;object-fit:contain;background:rgba(5,20,15,.92);filter:saturate(.78) contrast(.98);box-shadow:18px 22px 0 rgba(214,156,45,.12);}
@@ -256,8 +247,6 @@ main{position:relative;z-index:2}.chapter{position:relative;min-height:100vh;pad
 }
 @media (prefers-reduced-motion:reduce){
   .media-stage.is-transitioning .media-song-shell{animation:none;}
-  .media-song-shell.carousel-clone{display:none;}
-  .media-song-shell.is-carousel-enter-next,.media-song-shell.is-carousel-enter-prev{animation:none;}
   .media-arrow,.media-thumb{transition:none;}
 }
 
