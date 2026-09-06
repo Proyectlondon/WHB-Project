@@ -135,7 +135,20 @@
     </section>
 
     <section class="chapter contact" id="contact" data-chapter="07">
-      <div class="contact-main"><p class="eyebrow">07 · EL SIGUIENTE ALIENTO</p><h2>¿Nos<br><em>encontramos?</em></h2><p>Invítanos a tocar, a producir o a escuchar contigo la canción que está buscando su forma.</p><a class="mail-link" href="mailto:whbprojectmusic@gmail.com">whbprojectmusic@gmail.com <span>↗</span></a></div>
+      <div class="contact-grid">
+        <div class="contact-main"><p class="eyebrow">07 · EL SIGUIENTE ALIENTO</p><h2>¿Nos<br><em>encontramos?</em></h2><p>Invítanos a tocar, a producir o a escuchar contigo la canción que está buscando su forma.</p><a class="mail-link" href="mailto:whbprojectmusic@gmail.com">whbprojectmusic@gmail.com <span>↗</span></a></div>
+        <div class="booking-panel">
+          <div class="booking-head"><div><p class="eyebrow">RESERVAR UNA FECHA</p><h3>Cuéntanos<br><em>qué estás imaginando.</em></h3></div><span class="booking-mark">WHB / 3FR</span></div>
+          <p class="booking-note">La solicitud no confirma la presentación. Revisamos agenda, ciudad, formato y necesidades técnicas antes de responderte.</p>
+          <form id="booking-form" class="booking-form">
+            <div class="booking-fields"><label>Nombre<input name="name" type="text" autocomplete="name" required></label><label>Correo<input name="email" type="email" autocomplete="email" required></label><label>Fecha tentativa<input name="date" type="date" required></label><label>Ciudad y lugar<input name="location" type="text" placeholder="Ej. Tocancipá · Café del Parque" required></label><label>Tipo de solicitud<select name="request"><option value="Presentación de WHB">Presentación de WHB</option><option value="Producción con 3FR">Producción con 3FR</option><option value="Presentación + producción">Presentación + producción</option></select></label><label>Asistentes aproximados<select name="guests"><option>Hasta 50</option><option>50–150</option><option>150–300</option><option>Más de 300</option></select></label></div>
+            <label>Cuéntanos el contexto<textarea name="message" rows="3" placeholder="Tipo de evento, duración, necesidades técnicas o cualquier detalle útil."></textarea></label>
+            <button class="button button-light" type="submit">Preparar solicitud <span>↗</span></button>
+            <p id="booking-status" class="booking-status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+      <div class="availability-strip"><div><span class="eyebrow">AGENDA PÚBLICA</span><strong>Próximas fechas por confirmar.</strong></div><span>Las presentaciones confirmadas aparecerán aquí con ciudad, lugar y hora.</span></div>
       <div class="contact-footer"><div class="social-links"><a href="https://www.youtube.com/@Whbprojectmusic" target="_blank" rel="noreferrer">YouTube</a><a href="https://open.spotify.com/artist/3Ban3jhZSeynTDAlZweSIp" target="_blank" rel="noreferrer">Spotify</a><a href="https://www.instagram.com/whbproject" target="_blank" rel="noreferrer">Instagram</a></div><span>WHB Project · Bogotá / Tocancipá / Cali</span></div>
     </section>
   </main>
