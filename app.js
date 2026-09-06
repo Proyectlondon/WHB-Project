@@ -128,8 +128,17 @@ class WindField {
       this.pointer.vy = this.pointer.vy * .72 + Math.max(-4, Math.min(4, rawVy)) * .28;
       this.pointer.lastTime = now;
     }, { passive: true });
+    const releasePointer = () => {
+      window.setTimeout(() => { this.pointer.active = false; }, 180);
+    };
     window.addEventListener('pointerleave', () => { this.pointer.active = false; }, { passive: true });
+    window.addEventListener('pointerup', releasePointer, { passive: true });
+    window.addEventListener('pointercancel', releasePointer, { passive: true });
     window.addEventListener('pointerdown', (event) => {
+      this.pointer.x = event.clientX;
+      this.pointer.y = event.clientY;
+      this.pointer.active = true;
+      this.pointer.lastTime = performance.now();
       this.gust = 1;
       const radius = this.foreground ? 100 : 112;
       for (const p of this.particles) {
@@ -143,6 +152,33 @@ class WindField {
         }
       }
     }, { passive: true });
+    // Algunos navegadores móviles cancelan Pointer Events al comenzar el
+    // desplazamiento. Estos listeners mantienen una estela táctil ligera.
+    window.addEventListener('touchstart', (event) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      this.pointer.x = touch.clientX;
+      this.pointer.y = touch.clientY;
+      this.pointer.active = true;
+      this.pointer.lastTime = performance.now();
+      this.gust = .7;
+    }, { passive: true });
+    window.addEventListener('touchmove', (event) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      const now = performance.now();
+      const elapsed = this.pointer.lastTime ? Math.max(12, now - this.pointer.lastTime) : 16;
+      const nextX = touch.clientX;
+      const nextY = touch.clientY;
+      this.pointer.vx = this.pointer.vx * .72 + Math.max(-4, Math.min(4, (nextX - this.pointer.x) / elapsed * 16)) * .28;
+      this.pointer.vy = this.pointer.vy * .72 + Math.max(-4, Math.min(4, (nextY - this.pointer.y) / elapsed * 16)) * .28;
+      this.pointer.x = nextX;
+      this.pointer.y = nextY;
+      this.pointer.active = true;
+      this.pointer.lastTime = now;
+    }, { passive: true });
+    window.addEventListener('touchend', releasePointer, { passive: true });
+    window.addEventListener('touchcancel', releasePointer, { passive: true });
     this.resize();
     this.seed();
     requestAnimationFrame(this.frame);
