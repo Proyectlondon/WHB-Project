@@ -600,6 +600,37 @@ function initCursor() {
   });
 }
 
+function initBookingForm() {
+  const form = $('#booking-form');
+  const status = $('#booking-status');
+  if (!form) return;
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const name = String(data.get('name') || '').trim();
+    const email = String(data.get('email') || '').trim();
+    const date = String(data.get('date') || '').trim();
+    const location = String(data.get('location') || '').trim();
+    const request = String(data.get('request') || '').trim();
+    const guests = String(data.get('guests') || '').trim();
+    const message = String(data.get('message') || '').trim();
+    const subject = encodeURIComponent(`Solicitud WHB / 3FR · ${request}`);
+    const body = encodeURIComponent([
+      `Nombre: ${name}`,
+      `Correo: ${email}`,
+      `Fecha tentativa: ${date}`,
+      `Ciudad y lugar: ${location}`,
+      `Solicitud: ${request}`,
+      `Asistentes: ${guests}`,
+      '',
+      'Contexto:',
+      message || 'Sin detalles adicionales.'
+    ].join('\n'));
+    if (status) status.textContent = 'Abriendo tu correo con la solicitud preparada…';
+    window.location.href = `mailto:whbprojectmusic@gmail.com?subject=${subject}&body=${body}`;
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const wind = new WindField($('#windfield'));
   const windFront = new WindField($('#windfield-front'), true);
@@ -619,6 +650,6 @@ document.addEventListener('DOMContentLoaded', () => {
     $$('.filter').forEach((item) => item.classList.remove('is-active')); button.classList.add('is-active');
     const response = await fetch('content/catalog.json'); const catalog = await response.json(); renderVideos(catalog.videos || [], button.dataset.filter);
   }));
-  initNavigation(); initReveal(); initCursor(); initRemoteStaticAssets(); initHeroOpening(); loadCatalog();
+  initNavigation(); initReveal(); initCursor(); initBookingForm(); initRemoteStaticAssets(); initHeroOpening(); loadCatalog();
 });
 
