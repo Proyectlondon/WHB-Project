@@ -358,10 +358,6 @@ function renderMedia(catalog) {
     galleryIndex = Number(button.dataset.galleryIndex) || 0;
     renderGalleryState();
   });
-  root.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowRight') { mediaIndex = (mediaIndex + 1) % items.length; update(1); }
-    if (event.key === 'ArrowLeft') { mediaIndex = (mediaIndex - 1 + items.length) % items.length; update(-1); }
-  });
   let gestureStart = null;
   const swipeTarget = $('.media-song-shell', root) || root;
   const finishSwipe = (event) => {
@@ -385,6 +381,10 @@ function renderMedia(catalog) {
     gestureStart = null;
     swipeTarget.classList.remove('is-swipe-active');
   }, { passive: true });
+  root.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowRight') { mediaIndex = (mediaIndex + 1) % items.length; update(1); }
+    if (event.key === 'ArrowLeft') { mediaIndex = (mediaIndex - 1 + items.length) % items.length; update(-1); }
+  });
   root.tabIndex = 0;
   update();
 }
@@ -451,6 +451,7 @@ function initHeroOpening() {
     video.play().then(() => {
       started = true;
       opening.classList.add('is-playing');
+      opening.classList.remove('video-fallback');
       if (enter) {
         const label = enter.firstChild;
         if (label && label.nodeType === Node.TEXT_NODE) label.textContent = 'Entrar al campo ';
@@ -484,7 +485,6 @@ function initRemoteStaticAssets() {
     const path = element.dataset.assetPoster;
     if (path) element.setAttribute('poster', assetUrl(path));
   });
-  $('#hero-video')?.load();
 }
 
 function initNavigation() {
