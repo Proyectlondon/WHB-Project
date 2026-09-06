@@ -177,7 +177,7 @@ main{position:relative;z-index:2}.chapter{position:relative;min-height:100vh;pad
 .media-song-shell{display:grid;grid-template-columns:minmax(260px,430px) minmax(280px,1fr);gap:clamp(42px,8vw,130px);align-items:center;padding-bottom:58px;border-bottom:1px solid var(--line);touch-action:pan-y;}
 .media-song-shell.is-swipe-active{transform:scale(.995);transition:transform .16s ease-out;}
 .media-cover-frame{margin:0;max-width:430px;}
-.media-cover-frame img{display:block;width:100%;aspect-ratio:1;object-fit:cover;filter:saturate(.78) contrast(.98);box-shadow:18px 22px 0 rgba(214,156,45,.12);}
+.media-cover-frame img{display:block;width:100%;aspect-ratio:1;object-fit:contain;background:rgba(5,20,15,.92);filter:saturate(.78) contrast(.98);box-shadow:18px 22px 0 rgba(214,156,45,.12);}
 .media-cover-frame figcaption{display:flex;justify-content:space-between;gap:18px;margin-top:16px;color:var(--muted);font:500 9px var(--mono);letter-spacing:.1em;text-transform:uppercase;}
 .media-cover-note{display:block;margin-top:9px;color:rgba(238,227,205,.52);font:500 9px var(--mono);letter-spacing:.1em;text-transform:uppercase;}
 .media-cover-frame figcaption span:last-child{text-align:right;color:var(--gold);}
