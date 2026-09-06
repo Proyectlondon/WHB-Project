@@ -362,23 +362,28 @@ function renderMedia(catalog) {
     if (event.key === 'ArrowRight') { mediaIndex = (mediaIndex + 1) % items.length; update(1); }
     if (event.key === 'ArrowLeft') { mediaIndex = (mediaIndex - 1 + items.length) % items.length; update(-1); }
   });
-  let touchStart = null;
+  let gestureStart = null;
   const swipeTarget = $('.media-song-shell', root) || root;
-  swipeTarget.addEventListener('touchstart', (event) => {
-    const touch = event.changedTouches[0];
-    if (!touch) return;
-    touchStart = { x: touch.clientX, y: touch.clientY, time: performance.now() };
-  }, { passive: true });
-  swipeTarget.addEventListener('touchend', (event) => {
-    if (!touchStart) return;
-    const touch = event.changedTouches[0];
-    const dx = touch.clientX - touchStart.x;
-    const dy = touch.clientY - touchStart.y;
-    const elapsed = performance.now() - touchStart.time;
-    touchStart = null;
-    if (elapsed > 900 || Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.18) return;
+  const finishSwipe = (event) => {
+    if (!gestureStart || (event.pointerType && event.pointerType !== 'touch')) return;
+    const dx = event.clientX - gestureStart.x;
+    const dy = event.clientY - gestureStart.y;
+    const elapsed = performance.now() - gestureStart.time;
+    gestureStart = null;
+    swipeTarget.classList.remove('is-swipe-active');
+    if (elapsed > 900 || Math.abs(dx) < 32 || Math.abs(dx) < Math.abs(dy) * 1.05) return;
     mediaIndex = dx < 0 ? (mediaIndex + 1) % items.length : (mediaIndex - 1 + items.length) % items.length;
     update(dx < 0 ? 1 : -1);
+  };
+  swipeTarget.addEventListener('pointerdown', (event) => {
+    if (event.pointerType !== 'touch') return;
+    gestureStart = { x: event.clientX, y: event.clientY, time: performance.now() };
+    swipeTarget.classList.add('is-swipe-active');
+  }, { passive: true });
+  swipeTarget.addEventListener('pointerup', finishSwipe, { passive: true });
+  swipeTarget.addEventListener('pointercancel', () => {
+    gestureStart = null;
+    swipeTarget.classList.remove('is-swipe-active');
   }, { passive: true });
   root.tabIndex = 0;
   update();
