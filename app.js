@@ -339,6 +339,7 @@ function renderAudio(audio) {
     album.textContent = `${track.group || 'WHB Project'} · ${track.album}`;
     progress.value = '0'; current.textContent = '0:00'; duration.textContent = '0:00';
     $$('[data-audio-index]', root).forEach((button) => button.classList.toggle('is-active', Number(button.dataset.audioIndex) === activeIndex));
+    syncMini();
     if (autoplay) {
       const start = () => audioElement.play().catch(() => {});
       if (audioElement.readyState >= 2) start();
