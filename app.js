@@ -328,7 +328,7 @@ function renderAudio(audio) {
   audioElement.volume = Number(volume.value);
   audioElement.addEventListener('loadedmetadata', () => { duration.textContent = formatTime(audioElement.duration); });
   audioElement.addEventListener('timeupdate', () => { if (audioElement.duration) progress.value = String((audioElement.currentTime / audioElement.duration) * 100); current.textContent = formatTime(audioElement.currentTime); });
-  audioElement.addEventListener('play', syncPlay); audioElement.addEventListener('pause', syncPlay); audioElement.addEventListener('ended', () => selectTrack(activeIndex + 1, true));
+  audioElement.addEventListener('play', syncPlay); audioElement.addEventListener('pause', syncPlay);
 }
 
 function renderVideos(videos, filter = 'all') {
