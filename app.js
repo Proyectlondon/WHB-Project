@@ -294,7 +294,7 @@ function renderAudio(audio) {
   const root = $('#audio-catalog');
   if (!root) return;
   const groups = groupBy(audio, 'album');
-  root.innerHTML = `<div class="whb-player" id="whb-player" aria-label="Reproductor WHB Project"><div class="whb-player-meta"><span class="whb-player-kicker">AHORA SUENA</span><strong id="whb-player-title">Elige una Radio Version</strong><small id="whb-player-album">WHB Project · catálogo sonoro</small></div><div class="whb-player-controls"><button type="button" class="whb-player-button" data-audio-prev aria-label="Pista anterior">←</button><button type="button" class="whb-player-button whb-player-play" data-audio-play aria-label="Reproducir">▶</button><button type="button" class="whb-player-button" data-audio-next aria-label="Siguiente pista">→</button><div class="whb-player-progress"><input id="whb-player-progress" type="range" min="0" max="100" value="0" step="0.1" aria-label="Progreso de la pista"><div class="whb-player-times"><span id="whb-player-current">0:00</span><span id="whb-player-duration">0:00</span></div></div><label class="whb-player-volume" aria-label="Volumen"><span>◒</span><input id="whb-player-volume" type="range" min="0" max="1" value="0.8" step="0.05" aria-label="Volumen"></label></div><audio id="whb-audio" preload="metadata"></audio></div>${Object.entries(groups).map(([album, tracks], albumIndex) => `<details class="album-block"${albumIndex === 0 ? ' open' : ''}><summary class="album-title"><span>${album}</span><span class="album-meta"><span>${tracks.length} ${tracks.length === 1 ? 'pista' : 'pistas'}</span><span class="album-toggle" aria-hidden="true"></span></span></summary><div class="album-track-list">${tracks.map((track, index) => `<button class="track" type="button" data-audio-index="${audio.indexOf(track)}"><span class="track-no">${String(index + 1).padStart(2, '0')}</span><span class="track-title">${track.title}</span><span class="track-play-mark" aria-hidden="true">▶</span></button>`).join('')}</div></details>`).join('')}`;
+  root.innerHTML = `<div class="whb-player" id="whb-player" aria-label="Reproductor WHB Project"><div class="whb-player-meta"><span class="whb-player-kicker">AHORA SUENA</span><strong id="whb-player-title">Elige una Radio Version</strong><small id="whb-player-album">WHB Project · catálogo sonoro</small></div><div class="whb-player-controls"><button type="button" class="whb-player-button" data-audio-prev aria-label="Pista anterior">←</button><button type="button" class="whb-player-button whb-player-play" data-audio-play aria-label="Reproducir">▶</button><button type="button" class="whb-player-button" data-audio-next aria-label="Siguiente pista">→</button><div class="whb-player-progress"><input id="whb-player-progress" type="range" min="0" max="100" value="0" step="0.1" aria-label="Progreso de la pista"><div class="whb-player-times"><span id="whb-player-current">0:00</span><span id="whb-player-duration">0:00</span></div></div><label class="whb-player-volume" aria-label="Volumen"><span>◒</span><input id="whb-player-volume" type="range" min="0" max="1" value="0.8" step="0.05" aria-label="Volumen"></label></div><div class="whb-player-queue" role="group" aria-label="Modo de reproducción"><button type="button" class="whb-queue-button is-active" data-audio-queue="single">Una pista</button><button type="button" class="whb-queue-button" data-audio-queue="album">Reproducir álbum</button><button type="button" class="whb-queue-button" data-audio-queue="all">Reproducir todo</button><span id="whb-player-mode">Termina al finalizar</span></div><audio id="whb-audio" preload="metadata"></audio></div>${Object.entries(groups).map(([album, tracks], albumIndex) => `<details class="album-block"${albumIndex === 0 ? ' open' : ''}><summary class="album-title"><span>${album}</span><span class="album-meta"><span>${tracks.length} ${tracks.length === 1 ? 'pista' : 'pistas'}</span><span class="album-toggle" aria-hidden="true"></span></span></summary><div class="album-track-list">${tracks.map((track, index) => `<button class="track" type="button" data-audio-index="${audio.indexOf(track)}"><span class="track-no">${String(index + 1).padStart(2, '0')}</span><span class="track-title">${track.title}</span><span class="track-play-mark" aria-hidden="true">▶</span></button>`).join('')}</div></details>`).join('')}`;
   $('#audio-count').textContent = audio.length;
 
   const player = $('#whb-player');
@@ -306,9 +306,28 @@ function renderAudio(audio) {
   const volume = $('#whb-player-volume');
   const current = $('#whb-player-current');
   const duration = $('#whb-player-duration');
+  const mode = $('#whb-player-mode');
   let activeIndex = -1;
+  let queueMode = 'single';
+  let queueIndices = [];
   const formatTime = (value) => { if (!Number.isFinite(value)) return '0:00'; const minutes = Math.floor(value / 60); const seconds = String(Math.floor(value % 60)).padStart(2, '0'); return `${minutes}:${seconds}`; };
-  const selectTrack = (index, autoplay = false) => {
+  const setQueue = (nextMode) => {
+    queueMode = nextMode;
+    if (nextMode === 'album' && activeIndex >= 0) {
+      const albumName = audio[activeIndex].album;
+      queueIndices = audio.map((track, index) => track.album === albumName ? index : -1).filter((index) => index >= 0);
+    } else if (nextMode === 'album') {
+      queueIndices = audio.map((track, index) => track.album === audio[0].album ? index : -1).filter((index) => index >= 0);
+    } else if (nextMode === 'all') {
+      queueIndices = audio.map((_, index) => index);
+    } else {
+      queueIndices = activeIndex >= 0 ? [activeIndex] : [];
+    }
+    mode.textContent = nextMode === 'album' ? `Álbum · ${audio[queueIndices[0]]?.album || ''}` : nextMode === 'all' ? 'Todo el catálogo' : 'Termina al finalizar';
+    $$('[data-audio-queue]', player).forEach((button) => button.classList.toggle('is-active', button.dataset.audioQueue === nextMode));
+  };
+  const selectTrack = (index, autoplay = false, preserveQueue = false) => {
+    if (!preserveQueue) setQueue('single');
     activeIndex = (index + audio.length) % audio.length;
     const track = audio[activeIndex];
     audioElement.src = assetUrl(track.path);
@@ -319,9 +338,18 @@ function renderAudio(audio) {
     if (autoplay) audioElement.play().catch(() => {});
   };
   const syncPlay = () => { const playing = !audioElement.paused; play.textContent = playing ? 'Ⅱ' : '▶'; play.setAttribute('aria-label', playing ? 'Pausar' : 'Reproducir'); player.classList.toggle('is-playing', playing); };
+  const moveTrack = (direction) => {
+    if (activeIndex < 0) return selectTrack(0, true);
+    if (queueMode !== 'single' && queueIndices.length) {
+      const position = queueIndices.indexOf(activeIndex);
+      return selectTrack(queueIndices[(position + direction + queueIndices.length) % queueIndices.length], true, true);
+    }
+    return selectTrack(activeIndex + direction, true);
+  };
   play.addEventListener('click', () => { if (activeIndex < 0) selectTrack(0); if (audioElement.paused) audioElement.play().catch(() => {}); else audioElement.pause(); });
-  $('[data-audio-prev]', player).addEventListener('click', () => selectTrack(activeIndex <= 0 ? audio.length - 1 : activeIndex - 1, true));
-  $('[data-audio-next]', player).addEventListener('click', () => selectTrack(activeIndex < 0 ? 0 : activeIndex + 1, true));
+  $('[data-audio-prev]', player).addEventListener('click', () => moveTrack(-1));
+  $('[data-audio-next]', player).addEventListener('click', () => moveTrack(1));
+  $$('[data-audio-queue]', player).forEach((button) => button.addEventListener('click', () => { setQueue(button.dataset.audioQueue); selectTrack(queueIndices[0] ?? 0, true, true); }));
   root.addEventListener('click', (event) => { const button = event.target.closest('[data-audio-index]'); if (button) selectTrack(Number(button.dataset.audioIndex), true); });
   progress.addEventListener('input', () => { if (audioElement.duration) audioElement.currentTime = audioElement.duration * (Number(progress.value) / 100); });
   volume.addEventListener('input', () => { audioElement.volume = Number(volume.value); });
@@ -329,6 +357,12 @@ function renderAudio(audio) {
   audioElement.addEventListener('loadedmetadata', () => { duration.textContent = formatTime(audioElement.duration); });
   audioElement.addEventListener('timeupdate', () => { if (audioElement.duration) progress.value = String((audioElement.currentTime / audioElement.duration) * 100); current.textContent = formatTime(audioElement.currentTime); });
   audioElement.addEventListener('play', syncPlay); audioElement.addEventListener('pause', syncPlay);
+  audioElement.addEventListener('ended', () => {
+    if (queueMode === 'single' || !queueIndices.length) return;
+    const position = queueIndices.indexOf(activeIndex);
+    if (position >= 0 && position < queueIndices.length - 1) selectTrack(queueIndices[position + 1], true, true);
+    else { setQueue('single'); syncPlay(); }
+  });
 }
 
 function renderVideos(videos, filter = 'all') {
