@@ -52,4 +52,3 @@ Las portadas ya no se recortan agresivamente dentro del cuadro: ahora se muestra
 ## Próxima producción de arte
 
 La siguiente tanda puede crear portadas individuales coherentes con cada producción, empezando por S.A.L. y Pneuma. Deben conservar el nombre exacto de la canción, el grupo y el álbum para que el archivo sea verificable.
-

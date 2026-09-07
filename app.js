@@ -1,14 +1,7 @@
 const $ = (selector, scope = document) => scope.querySelector(selector);
 const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
-const PUBLIC_ASSET_BASE = 'https://raw.githubusercontent.com/Proyectlondon/WHB-Project/main/';
-
-function isHostedPreview() {
-  return window.location.protocol === 'https:' || (window.location.protocol === 'http:' && !['localhost', '127.0.0.1'].includes(window.location.hostname));
-}
-
 function assetUrl(path) {
-  if (!path || !isHostedPreview()) return path;
-  return PUBLIC_ASSET_BASE + path.split('/').map((part) => encodeURIComponent(part)).join('/');
+  return path;
 }
 
 const MEDIA_FEATURES = [
@@ -626,7 +619,6 @@ function initHeroOpening() {
 }
 
 function initRemoteStaticAssets() {
-  if (!isHostedPreview()) return;
   $$('[data-asset]').forEach((element) => {
     const path = element.dataset.asset;
     if (path) element.setAttribute('src', assetUrl(path));
@@ -767,4 +759,3 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavigation(); initReveal(); initCursor(); initBookingForm(); initRemoteStaticAssets(); initHeroOpening(); loadCatalog();
   if ('serviceWorker' in navigator && window.location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
 });
-

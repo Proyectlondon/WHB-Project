@@ -1,4 +1,4 @@
-const CACHE_NAME = 'whb-shell-v1';
+const CACHE_NAME = 'whb-shell-v2';
 const SHELL = ['./', './index.html', './styles.css', './app.js', './content/catalog.json', './manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
@@ -13,6 +13,9 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+  const isMedia = /\.(?:mp3|mp4|webm|ogg|m4a)$/i.test(url.pathname);
+  if (isMedia || event.request.headers.has('range')) return;
   event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
     if (event.request.url.startsWith(self.location.origin)) {
       const copy = response.clone();
@@ -21,4 +24,3 @@ self.addEventListener('fetch', (event) => {
     return response;
   })));
 });
-
