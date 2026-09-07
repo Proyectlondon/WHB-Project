@@ -422,6 +422,7 @@ function renderMedia(catalog) {
   const title = $('#media-title');
   const copy = $('#media-copy');
   const kind = $('#media-kind');
+  const watch = $('#media-watch');
   const frame = $('#media-player');
   const galleryImage = $('#media-gallery-image');
   const galleryCaption = $('#media-gallery-caption');
@@ -459,6 +460,7 @@ function renderMedia(catalog) {
     if (title) title.textContent = item.title;
     if (copy) copy.textContent = item.copy;
     if (kind) kind.textContent = item.kind;
+    if (watch) { watch.href = `https://www.youtube.com/watch?v=${item.id}`; watch.setAttribute('aria-label', `Ver video oficial de ${item.title}`); }
     if (frame) frame.innerHTML = `<iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${item.id}?rel=0" title="${item.title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
     if (index) index.textContent = String(mediaIndex + 1).padStart(2, '0');
     if (total) total.textContent = String(items.length).padStart(2, '0');
@@ -507,6 +509,19 @@ function renderMedia(catalog) {
     if (event.key === 'ArrowLeft') { mediaIndex = (mediaIndex - 1 + items.length) % items.length; update(-1); }
   });
   root.tabIndex = 0;
+  window.whbOpenProject = (projectName) => {
+    const target = items.findIndex((item) => item.group === projectName);
+    if (target >= 0) {
+      mediaIndex = target;
+      update();
+      document.querySelector('#media-video')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return true;
+    }
+    document.querySelector('#music')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const albumBlock = [...document.querySelectorAll('#audio-catalog .album-block')].find((block) => block.textContent.includes(projectName));
+    if (albumBlock) albumBlock.open = true;
+    return false;
+  };
   update();
 }
 
@@ -519,6 +534,12 @@ async function loadCatalog() {
     renderVideos(catalog.videos || []);
     renderGallery(catalog.gallery || []);
     renderMedia(catalog);
+    document.addEventListener('click', (event) => {
+      const projectLink = event.target.closest('[data-project]');
+      if (!projectLink || typeof window.whbOpenProject !== 'function') return;
+      event.preventDefault();
+      window.whbOpenProject(projectLink.dataset.project);
+    });
   } catch (error) {
     console.warn('No se pudo cargar el catálogo.', error);
     $$('.loading').forEach((node) => { node.textContent = 'El archivo estará disponible en cuanto se conecte la fuente.'; });
