@@ -337,12 +337,20 @@ function renderAudio(audio) {
     miniDismissed = false;
     activeIndex = (index + audio.length) % audio.length;
     const track = audio[activeIndex];
+    audioElement.pause();
+    audioElement.removeAttribute('src');
+    audioElement.load();
     audioElement.src = assetUrl(track.path);
+    audioElement.load();
     title.textContent = track.title;
     album.textContent = `${track.group || 'WHB Project'} · ${track.album}`;
     progress.value = '0'; current.textContent = '0:00'; duration.textContent = '0:00';
     $$('[data-audio-index]', root).forEach((button) => button.classList.toggle('is-active', Number(button.dataset.audioIndex) === activeIndex));
-    if (autoplay) audioElement.play().catch(() => {});
+    if (autoplay) {
+      const start = () => audioElement.play().catch(() => {});
+      if (audioElement.readyState >= 2) start();
+      else audioElement.addEventListener('canplay', start, { once: true });
+    }
   };
   const syncPlay = () => { const playing = !audioElement.paused; play.textContent = playing ? 'Ⅱ' : '▶'; play.setAttribute('aria-label', playing ? 'Pausar' : 'Reproducir'); player.classList.toggle('is-playing', playing); };
   const syncMini = () => { const playing = !audioElement.paused; $('#whb-mini-title').textContent = title.textContent; $('#whb-mini-album').textContent = album.textContent; $('[data-audio-mini-play]', mini).textContent = playing ? 'Ⅱ' : '▶'; $('[data-audio-mini-play]', mini).setAttribute('aria-label', playing ? 'Pausar' : 'Reproducir'); updateMiniVisibility(); };
