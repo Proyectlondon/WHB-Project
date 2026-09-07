@@ -765,5 +765,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const response = await fetch('content/catalog.json'); const catalog = await response.json(); renderVideos(catalog.videos || [], button.dataset.filter);
   }));
   initNavigation(); initReveal(); initCursor(); initBookingForm(); initRemoteStaticAssets(); initHeroOpening(); loadCatalog();
+  if ('serviceWorker' in navigator && window.location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
 });
 
