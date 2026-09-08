@@ -634,7 +634,7 @@ function renderMedia(catalog) {
 
   const renderGalleryThumbs = () => {
     if (!thumbs) return;
-    thumbs.innerHTML = archive.slice(0, 6).map((item, itemIndex) => `<button class="media-thumb${itemIndex === galleryIndex ? ' is-active' : ''}" type="button" data-gallery-index="${itemIndex}" aria-label="Ver imagen ${itemIndex + 1}"><img loading="lazy" src="${assetUrl(item.src)}" alt=""></button>`).join('');
+    thumbs.innerHTML = archive.map((item, itemIndex) => `<button class="media-thumb${itemIndex === galleryIndex ? ' is-active' : ''}" type="button" data-gallery-index="${itemIndex}" aria-label="Ver imagen ${itemIndex + 1} de ${archive.length}"><img loading="lazy" src="${assetUrl(item.src)}" alt=""></button>`).join('');
   };
 
   const renderGalleryState = () => {
@@ -645,6 +645,29 @@ function renderMedia(catalog) {
     if (commentForm) commentForm.dataset.image = image.src;
     renderGalleryThumbs();
   };
+
+  const lightbox = $('#gallery-lightbox');
+  const lightboxImage = $('#gallery-lightbox-image');
+  const lightboxCaption = $('#gallery-lightbox-caption');
+  const updateLightbox = () => {
+    const image = archive[galleryIndex % archive.length];
+    if (!image) return;
+    if (lightboxImage) { lightboxImage.src = assetUrl(image.src); lightboxImage.alt = image.alt; }
+    if (lightboxCaption) lightboxCaption.textContent = `${image.label} · ${image.title}`;
+  };
+  const openLightbox = () => {
+    if (!lightbox || !archive.length) return;
+    updateLightbox();
+    if (typeof lightbox.showModal === 'function') lightbox.showModal();
+    else lightbox.setAttribute('open', '');
+  };
+  galleryImage?.addEventListener('click', openLightbox);
+  galleryImage?.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openLightbox(); } });
+  lightbox?.querySelector('[data-gallery-close]')?.addEventListener('click', () => lightbox.close?.());
+  lightbox?.addEventListener('click', (event) => { if (event.target === lightbox) lightbox.close?.(); });
+  lightbox?.addEventListener('cancel', () => lightbox.close?.());
+  lightbox?.querySelector('[data-lightbox-prev]')?.addEventListener('click', () => { galleryIndex = (galleryIndex - 1 + archive.length) % archive.length; renderGalleryState(); updateLightbox(); });
+  lightbox?.querySelector('[data-lightbox-next]')?.addEventListener('click', () => { galleryIndex = (galleryIndex + 1) % archive.length; renderGalleryState(); updateLightbox(); });
 
   const update = (direction = 0) => {
     const item = items[mediaIndex];
@@ -671,7 +694,8 @@ function renderMedia(catalog) {
 
   $$('[data-media-prev]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex - 1 + items.length) % items.length; update(-1); }));
   $$('[data-media-next]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex + 1) % items.length; update(1); }));
-  root.addEventListener('click', (event) => {
+  const galleryRoot = $('#media-gallery');
+  galleryRoot?.addEventListener('click', (event) => {
     const previous = event.target.closest('[data-gallery-prev]');
     const next = event.target.closest('[data-gallery-next]');
     if (previous) { galleryIndex = (galleryIndex - 1 + archive.length) % archive.length; renderGalleryState(); }
