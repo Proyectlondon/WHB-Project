@@ -1,0 +1,15 @@
+node_modules/
+.env
+.env.local
+_archive/
+*.log
+qa/*.latest.txt
+qa/*.latest.json
+qa/*.err
+qa/*.out
+qa/report-render/
+qa/ux-ui-output/
+qa/video-review/
+
+.vercel
+.env*

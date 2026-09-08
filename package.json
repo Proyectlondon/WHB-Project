@@ -1,0 +1,16 @@
+{
+  "name": "site-v1.5",
+  "version": "1.0.0",
+  "description": "Versión nueva de la experiencia web de WHB Project. Esta carpeta no reutiliza el HTML, CSS ni JavaScript del prototipo anterior; solo comparte el catálogo y los activos aprobados.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}

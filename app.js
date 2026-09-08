@@ -1,14 +1,250 @@
 const $ = (selector, scope = document) => scope.querySelector(selector);
 const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
-const PUBLIC_ASSET_BASE = 'https://raw.githubusercontent.com/Proyectlondon/WHB-Project/main/';
-
-function isHostedPreview() {
-  return window.location.protocol === 'https:' || (window.location.protocol === 'http:' && !['localhost', '127.0.0.1'].includes(window.location.hostname));
+function assetUrl(path) {
+  return path;
 }
 
-function assetUrl(path) {
-  if (!path || !isHostedPreview()) return path;
-  return PUBLIC_ASSET_BASE + path.split('/').map((part) => encodeURIComponent(part)).join('/');
+const MEDIA_FEATURES = [
+  { match: '40 Días Después', cover: 'assets/images/poster-40-dias.png', coverKind: 'Portada oficial', copy: 'Una canción para atravesar la espera con la mirada puesta en la promesa.' },
+  { match: 'Astillas Del Olivo', cover: 'assets/images/poster-astillas.png', coverKind: 'Portada oficial', copy: 'Madera, memoria y una voz que encuentra luz en las pequeñas grietas.' },
+  { match: 'Con Tu Espíritu', cover: 'assets/images/con-tu-espiritu.jpg', coverKind: 'Arte del archivo', copy: 'El aire entre las voces: una oración popfolclor que se mueve despacio.' },
+  { match: 'Mi Dios Artesano', cover: 'assets/images/poster-mi-dios-artesano.png', coverKind: 'Portada oficial', copy: 'Una canción sobre el oficio de crear y la presencia que acompaña el camino.' },
+  { match: 'Mi Huertica', cover: 'assets/images/mi-huertica.jpg', coverKind: 'Arte del archivo', copy: 'Una memoria de diciembre que vuelve a sonar con calidez de casa.' },
+  { match: 'Señor Escucha Mi Cantar', cover: 'assets/images/poster-senor-escucha.png', coverKind: 'Portada oficial', copy: 'La voz se vuelve conversación: pedir, agradecer y seguir cantando.' },
+  { match: 'Zamba del Olivo Verde', cover: 'assets/images/poster-zamba.png', coverKind: 'Portada oficial', copy: 'Una raíz que se mueve entre el folclor, la celebración y la esperanza.' },
+  { match: 'Tengo Sed', cover: 'assets/images/poster-tengo-sed.png', coverKind: 'Portada oficial', copy: 'S.A.L. abre una grieta de rock alternativo para decir lo que arde.' }
+];
+
+const MEDIA_ALBUM_ART = {
+  'Fundamentales Desde La Loma Vol. 1': {
+    cover: 'assets/images/complementary/whb-fundamentales-complementary.png',
+    coverKind: 'Arte complementario',
+    coverAlt: 'Arte complementario de Fundamentales Desde La Loma Vol. 1'
+  },
+  'El Sermón de las 7 palabras': {
+    cover: 'assets/images/complementary/sal-sermon-complementary.png',
+    coverKind: 'Arte complementario',
+    coverAlt: 'Arte complementario de El Sermón de las 7 palabras · S.A.L'
+  },
+  'Suspiros de Esperanza': {
+    cover: 'assets/images/complementary/pneuma-suspiros-complementary.png',
+    coverKind: 'Arte complementario',
+    coverAlt: 'Arte complementario de Suspiros de Esperanza · Pneuma'
+  }
+};
+
+const MEDIA_COVER_FALLBACKS = {
+  'S.A.L': { cover: 'assets/images/poster-tengo-sed.png', coverKind: 'Arte del archivo' },
+  Pneuma: { cover: 'assets/images/poster-senor-escucha.png', coverKind: 'Arte del archivo' },
+  'WHB Project': { cover: 'assets/images/poster-son-del-monte.png', coverKind: 'Portada oficial' }
+};
+
+function mediaArtwork(video) {
+  return MEDIA_ALBUM_ART[video.album] || MEDIA_COVER_FALLBACKS[video.group] || { cover: 'assets/images/son-del-monte.jpg', coverKind: 'Arte del archivo' };
+}
+
+class AmbientWind {
+  constructor() {
+    // Se solicita activo desde el inicio. Los navegadores que bloquean
+    // autoplay mantienen los archivos en reproducción silenciosa hasta el
+    // primer gesto del visitante y luego liberan el sonido sin otro clic.
+    this.enabled = false;
+    this.unlocked = false;
+    this.birds = null;
+    this.river = null;
+    this.atmosphereContext = null;
+    this.atmosphereSource = null;
+    this.atmosphereGain = null;
+    this.pianoGain = null;
+    this.pianoDelay = null;
+    this.pianoEchoGain = null;
+    this.pianoTimer = null;
+    this.pianoStep = 0;
+    this.openingBreathPlayed = false;
+  }
+  create() {
+    this.birds = new Audio(assetUrl('assets/audio/ambience/park_ambience_birds.mp3'));
+    this.river = new Audio(assetUrl('assets/audio/ambience/park_ambience_river.mp3'));
+    [this.birds, this.river].forEach((audio) => {
+      audio.loop = true;
+      audio.preload = 'auto';
+      audio.muted = true;
+      audio.setAttribute('aria-hidden', 'true');
+    });
+    this.birds.volume = .28;
+    this.river.volume = .2;
+    return true;
+  }
+  createAtmosphere() {
+    if (this.atmosphereContext || !window.AudioContext && !window.webkitAudioContext) return;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    this.atmosphereContext = new AudioContextClass();
+    const buffer = this.atmosphereContext.createBuffer(1, this.atmosphereContext.sampleRate * 3, this.atmosphereContext.sampleRate);
+    const channel = buffer.getChannelData(0);
+    let last = 0;
+    for (let index = 0; index < channel.length; index += 1) {
+      last = last * .985 + (Math.random() * 2 - 1) * .015;
+      channel[index] = last;
+    }
+    this.atmosphereSource = this.atmosphereContext.createBufferSource();
+    this.atmosphereSource.buffer = buffer;
+    this.atmosphereSource.loop = true;
+    const filter = this.atmosphereContext.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 720;
+    this.atmosphereGain = this.atmosphereContext.createGain();
+    this.atmosphereGain.gain.value = .006;
+    this.atmosphereSource.connect(filter).connect(this.atmosphereGain).connect(this.atmosphereContext.destination);
+    this.atmosphereSource.start();
+
+    // Una cama de piano generada con Web Audio: acordes lentos y abiertos,
+    // suficientemente bajos para convivir con el río y los pájaros sin
+    // convertir la navegación en una pista musical protagonista.
+    this.pianoGain = this.atmosphereContext.createGain();
+    this.pianoGain.gain.value = 0;
+    const pianoFilter = this.atmosphereContext.createBiquadFilter();
+    pianoFilter.type = 'lowpass';
+    pianoFilter.frequency.value = 1450;
+    pianoFilter.Q.value = .28;
+    this.pianoDelay = this.atmosphereContext.createDelay(2.5);
+    this.pianoDelay.delayTime.value = .72;
+    this.pianoEchoGain = this.atmosphereContext.createGain();
+    this.pianoEchoGain.gain.value = .16;
+    this.pianoGain.connect(pianoFilter);
+    pianoFilter.connect(this.atmosphereContext.destination);
+    pianoFilter.connect(this.pianoDelay).connect(this.pianoEchoGain).connect(this.atmosphereContext.destination);
+    this.startPianoAtmosphere();
+  }
+  playPianoNote(frequency, startTime, duration = 7.2) {
+    if (!this.atmosphereContext || !this.pianoGain) return;
+    const oscillator = this.atmosphereContext.createOscillator();
+    const harmonic = this.atmosphereContext.createOscillator();
+    const envelope = this.atmosphereContext.createGain();
+    oscillator.type = 'triangle';
+    harmonic.type = 'sine';
+    oscillator.frequency.setValueAtTime(frequency, startTime);
+    harmonic.frequency.setValueAtTime(frequency * 2, startTime);
+    harmonic.detune.setValueAtTime(-2, startTime);
+    const harmonicGain = this.atmosphereContext.createGain();
+    harmonicGain.gain.value = .16;
+    envelope.gain.setValueAtTime(.0001, startTime);
+    envelope.gain.exponentialRampToValueAtTime(.56, startTime + .8);
+    envelope.gain.exponentialRampToValueAtTime(.34, startTime + 2.9);
+    envelope.gain.exponentialRampToValueAtTime(.0001, startTime + duration);
+    oscillator.connect(envelope);
+    harmonic.connect(harmonicGain).connect(envelope);
+    envelope.connect(this.pianoGain);
+    oscillator.start(startTime);
+    harmonic.start(startTime);
+    oscillator.stop(startTime + duration + .08);
+    harmonic.stop(startTime + duration + .08);
+  }
+  startPianoAtmosphere() {
+    if (this.pianoTimer || !this.atmosphereContext) return;
+    const chords = [
+      [261.63, 392.00, 523.25],
+      [220.00, 329.63, 440.00],
+      [174.61, 261.63, 392.00],
+      [196.00, 293.66, 392.00]
+    ];
+    const playChord = () => {
+      const start = this.atmosphereContext.currentTime + .06;
+      const chord = chords[this.pianoStep % chords.length];
+      chord.forEach((frequency, index) => this.playPianoNote(frequency, start + index * .28, 8.8));
+      this.pianoStep += 1;
+    };
+    playChord();
+    this.pianoTimer = window.setInterval(playChord, 9500);
+  }
+  playOpeningBreath() {
+    if (!this.enabled || !this.unlocked || !this.atmosphereContext || this.openingBreathPlayed) return false;
+    this.openingBreathPlayed = true;
+    const context = this.atmosphereContext;
+    const start = context.currentTime + .04;
+    const duration = 3.7;
+    const sampleCount = Math.floor(context.sampleRate * duration);
+    const buffer = context.createBuffer(1, sampleCount, context.sampleRate);
+    const channel = buffer.getChannelData(0);
+    let previous = 0;
+    for (let index = 0; index < sampleCount; index += 1) {
+      previous = previous * .94 + (Math.random() * 2 - 1) * .06;
+      channel[index] = previous * 2.4;
+    }
+    const source = context.createBufferSource();
+    const highPass = context.createBiquadFilter();
+    const windBand = context.createBiquadFilter();
+    const gain = context.createGain();
+    source.buffer = buffer;
+    source.playbackRate.value = .9;
+    highPass.type = 'highpass';
+    highPass.frequency.setValueAtTime(120, start);
+    windBand.type = 'bandpass';
+    windBand.Q.value = .42;
+    windBand.frequency.setValueAtTime(260, start);
+    windBand.frequency.linearRampToValueAtTime(1450, start + 1.15);
+    windBand.frequency.linearRampToValueAtTime(620, start + 2.35);
+    windBand.frequency.exponentialRampToValueAtTime(220, start + duration);
+    gain.gain.setValueAtTime(.0001, start);
+    gain.gain.exponentialRampToValueAtTime(.035, start + .42);
+    gain.gain.exponentialRampToValueAtTime(.11, start + 1.25);
+    gain.gain.exponentialRampToValueAtTime(.0001, start + duration);
+    source.connect(highPass).connect(windBand).connect(gain).connect(context.destination);
+    source.start(start);
+    source.stop(start + duration + .08);
+
+    // El soplo ocupa el primer plano durante un instante y luego devuelve el
+    // paisaje sonoro a su nivel normal. La transición evita que el viento se
+    // pierda detrás del río y los pájaros en altavoces pequeños.
+    const fadeNativeAudio = (audio, target, milliseconds) => {
+      if (!audio) return;
+      const initial = audio.volume;
+      const startedAt = performance.now();
+      const step = (now) => {
+        const progress = Math.min(1, (now - startedAt) / milliseconds);
+        audio.volume = initial + (target - initial) * progress;
+        if (progress < 1) window.requestAnimationFrame(step);
+      };
+      window.requestAnimationFrame(step);
+    };
+    fadeNativeAudio(this.birds, .12, 420);
+    fadeNativeAudio(this.river, .08, 420);
+    window.setTimeout(() => {
+      if (!this.enabled) return;
+      fadeNativeAudio(this.birds, .28, 850);
+      fadeNativeAudio(this.river, .2, 850);
+    }, 2900);
+    return true;
+  }
+  unlock() {
+    if (!this.enabled || !this.birds || this.unlocked) return;
+    this.unlocked = true;
+    [this.birds, this.river].forEach((audio) => { audio.muted = false; });
+    Promise.all([this.birds.play(), this.river.play()]).catch(() => {});
+    this.createAtmosphere();
+    if (this.atmosphereGain && this.atmosphereContext) this.atmosphereGain.gain.setTargetAtTime(.006, this.atmosphereContext.currentTime, .12);
+    if (this.pianoGain && this.atmosphereContext) this.pianoGain.gain.setTargetAtTime(.028, this.atmosphereContext.currentTime, .18);
+    this.atmosphereContext?.resume().catch(() => {});
+  }
+  setEnabled(enabled) {
+    if (!this.birds && !this.create()) return false;
+    this.enabled = enabled;
+    if (enabled) {
+      const starts = [this.birds.play(), this.river.play()];
+      Promise.all(starts).catch(() => {});
+      if (this.unlocked) {
+        [this.birds, this.river].forEach((audio) => { audio.muted = false; });
+        if (this.atmosphereGain && this.atmosphereContext) this.atmosphereGain.gain.setTargetAtTime(.006, this.atmosphereContext.currentTime, .12);
+        if (this.pianoGain && this.atmosphereContext) this.pianoGain.gain.setTargetAtTime(.028, this.atmosphereContext.currentTime, .18);
+      }
+    } else {
+      this.birds.pause();
+      this.river.pause();
+      [this.birds, this.river].forEach((audio) => { audio.muted = true; });
+      if (this.atmosphereGain && this.atmosphereContext) this.atmosphereGain.gain.setTargetAtTime(0, this.atmosphereContext.currentTime, .12);
+      if (this.pianoGain && this.atmosphereContext) this.pianoGain.gain.setTargetAtTime(0, this.atmosphereContext.currentTime, .18);
+    }
+    return enabled;
+  }
 }
 
 class WindField {
@@ -38,8 +274,17 @@ class WindField {
       this.pointer.vy = this.pointer.vy * .72 + Math.max(-4, Math.min(4, rawVy)) * .28;
       this.pointer.lastTime = now;
     }, { passive: true });
+    const releasePointer = () => {
+      window.setTimeout(() => { this.pointer.active = false; }, 180);
+    };
     window.addEventListener('pointerleave', () => { this.pointer.active = false; }, { passive: true });
+    window.addEventListener('pointerup', releasePointer, { passive: true });
+    window.addEventListener('pointercancel', releasePointer, { passive: true });
     window.addEventListener('pointerdown', (event) => {
+      this.pointer.x = event.clientX;
+      this.pointer.y = event.clientY;
+      this.pointer.active = true;
+      this.pointer.lastTime = performance.now();
       this.gust = 1;
       const radius = this.foreground ? 100 : 112;
       for (const p of this.particles) {
@@ -53,6 +298,33 @@ class WindField {
         }
       }
     }, { passive: true });
+    // Algunos navegadores móviles cancelan Pointer Events al comenzar el
+    // desplazamiento. Estos listeners mantienen una estela táctil ligera.
+    window.addEventListener('touchstart', (event) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      this.pointer.x = touch.clientX;
+      this.pointer.y = touch.clientY;
+      this.pointer.active = true;
+      this.pointer.lastTime = performance.now();
+      this.gust = .7;
+    }, { passive: true });
+    window.addEventListener('touchmove', (event) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      const now = performance.now();
+      const elapsed = this.pointer.lastTime ? Math.max(12, now - this.pointer.lastTime) : 16;
+      const nextX = touch.clientX;
+      const nextY = touch.clientY;
+      this.pointer.vx = this.pointer.vx * .72 + Math.max(-4, Math.min(4, (nextX - this.pointer.x) / elapsed * 16)) * .28;
+      this.pointer.vy = this.pointer.vy * .72 + Math.max(-4, Math.min(4, (nextY - this.pointer.y) / elapsed * 16)) * .28;
+      this.pointer.x = nextX;
+      this.pointer.y = nextY;
+      this.pointer.active = true;
+      this.pointer.lastTime = now;
+    }, { passive: true });
+    window.addEventListener('touchend', releasePointer, { passive: true });
+    window.addEventListener('touchcancel', releasePointer, { passive: true });
     this.resize();
     this.seed();
     requestAnimationFrame(this.frame);
@@ -168,21 +440,312 @@ function renderAudio(audio) {
   const root = $('#audio-catalog');
   if (!root) return;
   const groups = groupBy(audio, 'album');
-  root.innerHTML = Object.entries(groups).map(([album, tracks], albumIndex) => `<details class="album-block"${albumIndex === 0 ? ' open' : ''}><summary class="album-title"><span>${album}</span><span class="album-meta"><span>${tracks.length} ${tracks.length === 1 ? 'pista' : 'pistas'}</span><span class="album-toggle" aria-hidden="true"></span></span></summary><div class="album-track-list">${tracks.map((track, index) => `<div class="track"><span class="track-no">${String(index + 1).padStart(2, '0')}</span><span class="track-title">${track.title}</span><audio controls preload="none" src="${assetUrl(track.path)}" aria-label="Reproducir ${track.title}"></audio></div>`).join('')}</div></details>`).join('');
+  root.innerHTML = `<div class="whb-player" id="whb-player" aria-label="Reproductor WHB Project"><div class="whb-player-meta"><span class="whb-player-kicker">AHORA SUENA</span><strong id="whb-player-title">Elige una Radio Version</strong><small id="whb-player-album">WHB Project · catálogo sonoro</small></div><div class="whb-player-controls"><button type="button" class="whb-player-button" data-audio-prev aria-label="Pista anterior">←</button><button type="button" class="whb-player-button whb-player-play" data-audio-play aria-label="Reproducir">▶</button><button type="button" class="whb-player-button" data-audio-next aria-label="Siguiente pista">→</button><div class="whb-player-progress"><input id="whb-player-progress" type="range" min="0" max="100" value="0" step="0.1" aria-label="Progreso de la pista"><div class="whb-player-times"><span id="whb-player-current">0:00</span><span id="whb-player-duration">0:00</span></div></div><label class="whb-player-volume" aria-label="Volumen"><span>◒</span><input id="whb-player-volume" type="range" min="0" max="1" value="0.8" step="0.05" aria-label="Volumen"></label></div><div class="whb-player-queue" role="group" aria-label="Modo de reproducción"><button type="button" class="whb-queue-button is-active" data-audio-queue="single">Una pista</button><button type="button" class="whb-queue-button" data-audio-queue="repeat-one">Repetir pista</button><button type="button" class="whb-queue-button" data-audio-queue="album">Reproducir álbum</button><button type="button" class="whb-queue-button" data-audio-queue="all">Todo en orden</button><button type="button" class="whb-queue-button" data-audio-queue="shuffle">Aleatorio</button><button type="button" class="whb-queue-button" data-audio-queue="repeat-all">Repetir todo</button><span id="whb-player-mode">Termina al finalizar</span></div><audio id="whb-audio" preload="metadata"></audio></div><div class="audio-search-wrap"><label class="audio-search" for="audio-search">Buscar en la loma<input id="audio-search" type="search" placeholder="Canción, álbum o proyecto" autocomplete="off"></label></div><div class="whb-mini-player" id="whb-mini-player" aria-label="Controles de reproducción rápida" hidden><div class="whb-mini-copy"><span>AHORA SUENA</span><strong id="whb-mini-title">Elige una canción</strong><small id="whb-mini-album">WHB Project</small></div><button type="button" class="whb-mini-button" data-audio-mini-prev aria-label="Pista anterior">←</button><button type="button" class="whb-mini-button whb-mini-play" data-audio-mini-play aria-label="Reproducir">▶</button><button type="button" class="whb-mini-button" data-audio-mini-next aria-label="Siguiente pista">→</button><button type="button" class="whb-mini-close" data-audio-mini-close aria-label="Ocultar reproductor">×</button></div>${Object.entries(groups).map(([album, tracks], albumIndex) => `<details class="album-block"${albumIndex === 0 ? ' open' : ''}><summary class="album-title"><span>${album}</span><span class="album-meta"><span>${tracks.length} ${tracks.length === 1 ? 'pista' : 'pistas'}</span><span class="album-toggle" aria-hidden="true"></span></span></summary><div class="album-track-list">${tracks.map((track, index) => `<button class="track" type="button" data-audio-index="${audio.indexOf(track)}"><span class="track-no">${String(index + 1).padStart(2, '0')}</span><span class="track-title">${track.title}</span><span class="track-play-mark" aria-hidden="true">▶</span></button>`).join('')}</div></details>`).join('')}`;
   $('#audio-count').textContent = audio.length;
+  const playerArtwork = document.createElement('div');
+  playerArtwork.className = 'whb-player-art';
+  playerArtwork.innerHTML = '<img id="whb-player-art" src="' + assetUrl('assets/images/hero-whb-poster.jpg') + '" alt="Arte de la pista actual" loading="lazy">';
+  document.getElementById('whb-player')?.prepend(playerArtwork);
+
+  const player = $('#whb-player');
+  const mini = $('#whb-mini-player');
+  const audioElement = $('#whb-audio');
+  const title = $('#whb-player-title');
+  const album = $('#whb-player-album');
+  const artwork = $('#whb-player-art');
+  const play = $('[data-audio-play]', player);
+  const progress = $('#whb-player-progress');
+  const volume = $('#whb-player-volume');
+  const current = $('#whb-player-current');
+  const duration = $('#whb-player-duration');
+  const mode = $('#whb-player-mode');
+  let activeIndex = -1;
+  let queueMode = 'single';
+  let queueIndices = [];
+  let mainPlayerVisible = true;
+  let miniDismissed = false;
+  const updateMiniVisibility = () => {
+    mini.hidden = !(activeIndex >= 0 && !mainPlayerVisible && !miniDismissed);
+    document.body.classList.toggle('has-mini-player', !mini.hidden);
+  };
+  const formatTime = (value) => { if (!Number.isFinite(value)) return '0:00'; const minutes = Math.floor(value / 60); const seconds = String(Math.floor(value % 60)).padStart(2, '0'); return `${minutes}:${seconds}`; };
+  const shuffle = (indices) => indices.slice().sort(() => Math.random() - .5);
+  const setQueue = (nextMode) => {
+    queueMode = nextMode;
+    if (nextMode === 'album' && activeIndex >= 0) {
+      const albumName = audio[activeIndex].album;
+      queueIndices = audio.map((track, index) => track.album === albumName ? index : -1).filter((index) => index >= 0);
+    } else if (nextMode === 'album') {
+      queueIndices = audio.map((track, index) => track.album === audio[0].album ? index : -1).filter((index) => index >= 0);
+    } else if (nextMode === 'all' || nextMode === 'repeat-all' || nextMode === 'shuffle') {
+      queueIndices = audio.map((_, index) => index);
+      if (nextMode === 'shuffle') queueIndices = shuffle(queueIndices);
+    } else {
+      queueIndices = activeIndex >= 0 ? [activeIndex] : (audio.length ? [0] : []);
+    }
+    const labels = {
+      single: 'Termina al finalizar',
+      'repeat-one': 'Repite esta pista',
+      album: `Álbum · ${audio[queueIndices[0]]?.album || ''}`,
+      all: 'Todo el catálogo · en orden',
+      shuffle: 'Todo el catálogo · aleatorio',
+      'repeat-all': 'Todo el catálogo · en bucle'
+    };
+    mode.textContent = labels[nextMode] || labels.single;
+    $$('[data-audio-queue]', player).forEach((button) => button.classList.toggle('is-active', button.dataset.audioQueue === nextMode));
+  };
+  const selectTrack = (index, autoplay = false, preserveQueue = false) => {
+    if (!preserveQueue) setQueue('single');
+    miniDismissed = false;
+    activeIndex = (index + audio.length) % audio.length;
+    const track = audio[activeIndex];
+    audioElement.pause();
+    audioElement.removeAttribute('src');
+    audioElement.load();
+    audioElement.src = assetUrl(track.path);
+    audioElement.load();
+    title.textContent = track.title;
+    album.textContent = `${track.group || 'WHB Project'} · ${track.album}`;
+    if (artwork && track.art) { artwork.src = assetUrl(track.art); artwork.alt = `Arte de ${track.title}`; }
+    progress.value = '0'; current.textContent = '0:00'; duration.textContent = '0:00';
+    $$('[data-audio-index]', root).forEach((button) => button.classList.toggle('is-active', Number(button.dataset.audioIndex) === activeIndex));
+    syncMini();
+    if (autoplay) {
+      const start = () => audioElement.play().catch(() => {});
+      if (audioElement.readyState >= 2) start();
+      else audioElement.addEventListener('canplay', start, { once: true });
+    }
+  };
+  const syncPlay = () => { const playing = !audioElement.paused; play.textContent = playing ? 'Ⅱ' : '▶'; play.setAttribute('aria-label', playing ? 'Pausar' : 'Reproducir'); player.classList.toggle('is-playing', playing); };
+  const syncMini = () => { const playing = !audioElement.paused; $('#whb-mini-title').textContent = title.textContent; $('#whb-mini-album').textContent = album.textContent; $('[data-audio-mini-play]', mini).textContent = playing ? 'Ⅱ' : '▶'; $('[data-audio-mini-play]', mini).setAttribute('aria-label', playing ? 'Pausar' : 'Reproducir'); updateMiniVisibility(); };
+  const moveTrack = (direction) => {
+    if (activeIndex < 0) return selectTrack(0, true);
+    if (queueMode === 'repeat-one') return selectTrack(activeIndex + direction, true);
+    if (queueMode !== 'single' && queueIndices.length) {
+      const position = queueIndices.indexOf(activeIndex);
+      return selectTrack(queueIndices[(position + direction + queueIndices.length) % queueIndices.length], true, true);
+    }
+    return selectTrack(activeIndex + direction, true);
+  };
+  play.addEventListener('click', () => { if (activeIndex < 0) selectTrack(0); if (audioElement.paused) audioElement.play().catch(() => {}); else audioElement.pause(); });
+  $('[data-audio-prev]', player).addEventListener('click', () => moveTrack(-1));
+  $('[data-audio-next]', player).addEventListener('click', () => moveTrack(1));
+  $('[data-audio-mini-prev]', mini).addEventListener('click', () => moveTrack(-1));
+  $('[data-audio-mini-next]', mini).addEventListener('click', () => moveTrack(1));
+  $('[data-audio-mini-play]', mini).addEventListener('click', () => { if (audioElement.paused) audioElement.play().catch(() => {}); else audioElement.pause(); });
+  $('[data-audio-mini-close]', mini).addEventListener('click', () => { miniDismissed = true; updateMiniVisibility(); });
+  $$('[data-audio-queue]', player).forEach((button) => button.addEventListener('click', () => { setQueue(button.dataset.audioQueue); selectTrack(queueIndices[0] ?? 0, true, true); }));
+  root.addEventListener('click', (event) => { const button = event.target.closest('[data-audio-index]'); if (button) selectTrack(Number(button.dataset.audioIndex), true); });
+  root.addEventListener('toggle', (event) => {
+    if (event.target.tagName !== 'DETAILS' || !event.target.open || !window.matchMedia('(max-width: 560px)').matches) return;
+    root.querySelectorAll('.album-block[open]').forEach((block) => { if (block !== event.target) block.open = false; });
+  }, true);
+  $('#audio-search')?.addEventListener('input', (event) => {
+    const query = event.target.value.trim().toLocaleLowerCase();
+    root.querySelectorAll('.album-block').forEach((block) => {
+      let matches = 0;
+      block.querySelectorAll('.track').forEach((track) => {
+        const match = !query || track.textContent.toLocaleLowerCase().includes(query) || block.querySelector('.album-title')?.textContent.toLocaleLowerCase().includes(query);
+        track.hidden = !match;
+        if (match) matches += 1;
+      });
+      block.hidden = matches === 0;
+      if (query && matches) block.open = true;
+    });
+  });
+  progress.addEventListener('input', () => { if (audioElement.duration) audioElement.currentTime = audioElement.duration * (Number(progress.value) / 100); });
+  volume.addEventListener('input', () => { audioElement.volume = Number(volume.value); });
+  audioElement.volume = Number(volume.value);
+  audioElement.addEventListener('loadedmetadata', () => { duration.textContent = formatTime(audioElement.duration); });
+  audioElement.addEventListener('timeupdate', () => { if (audioElement.duration) progress.value = String((audioElement.currentTime / audioElement.duration) * 100); current.textContent = formatTime(audioElement.currentTime); });
+  audioElement.addEventListener('play', () => { syncPlay(); syncMini(); }); audioElement.addEventListener('pause', () => { syncPlay(); syncMini(); });
+  audioElement.addEventListener('ended', () => {
+    if (queueMode === 'single' || !queueIndices.length) return;
+    if (queueMode === 'repeat-one') return selectTrack(activeIndex, true, true);
+    const position = queueIndices.indexOf(activeIndex);
+    if (position >= 0 && position < queueIndices.length - 1) selectTrack(queueIndices[position + 1], true, true);
+    else if (queueMode === 'repeat-all') selectTrack(queueIndices[0], true, true);
+    else if (queueMode === 'shuffle') { setQueue('shuffle'); selectTrack(queueIndices[0], true, true); }
+    else { setQueue('single'); syncPlay(); syncMini(); }
+  });
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(([entry]) => { mainPlayerVisible = entry.isIntersecting; updateMiniVisibility(); }, { threshold: 0.08 }).observe(player);
+  } else {
+    window.addEventListener('scroll', () => { mainPlayerVisible = player.getBoundingClientRect().bottom > 0 && player.getBoundingClientRect().top < window.innerHeight; updateMiniVisibility(); }, { passive: true });
+  }
 }
 
 function renderVideos(videos, filter = 'all') {
   const root = $('#video-catalog');
   if (!root) return;
   const visible = filter === 'all' ? videos : videos.filter((video) => video.group === filter);
-  root.innerHTML = visible.map((video) => `<article class="video-card"><div class="video-frame"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${video.id}?rel=0" title="${video.title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><div class="video-meta"><p>${video.group} · ${video.album}</p><h3>${video.title}</h3><small>${video.kind}</small></div></article>`).join('');
+  root.innerHTML = visible.map((video) => `<article class="video-card"><div class="video-frame"><button class="video-load" type="button" data-video-id="${video.id}" aria-label="Reproducir ${video.title}"><img loading="lazy" src="https://i.ytimg.com/vi/${video.id}/hqdefault.jpg" alt="" decoding="async"><span aria-hidden="true">▶</span></button></div><div class="video-meta"><p>${video.group} · ${video.album}</p><h3>${video.title}</h3><small>${video.kind}</small></div></article>`).join('');
+  root.querySelectorAll('[data-video-id]').forEach((button) => button.addEventListener('click', () => {
+    const video = visible.find((item) => item.id === button.dataset.videoId);
+    if (!video) return;
+    const frame = button.closest('.video-frame');
+    frame.innerHTML = `<iframe loading="eager" src="https://www.youtube-nocookie.com/embed/${video.id}?rel=0" title="${video.title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+  }, { once: true }));
 }
 
 function renderGallery(gallery) {
   const root = $('#gallery-grid');
   if (!root) return;
   root.innerHTML = gallery.map((item) => `<figure class="gallery-tile"><img loading="lazy" src="${assetUrl(item.src)}" alt="${item.alt}"><figcaption class="gallery-caption"><span>${item.label}</span><b>${item.title}</b></figcaption></figure>`).join('');
+}
+
+function renderMedia(catalog) {
+  const root = $('#media-stage');
+  if (!root) return;
+  const videos = catalog.videos || [];
+  const archive = catalog.gallery || [];
+  const featured = MEDIA_FEATURES.map((feature) => {
+    const video = videos.find((candidate) => candidate.title === feature.match || candidate.title.includes(feature.match));
+    return video ? { ...feature, ...video } : null;
+  }).filter(Boolean);
+  const featuredIds = new Set(featured.map((item) => item.id));
+  const remaining = videos.filter((video) => !featuredIds.has(video.id)).map((video) => ({
+    ...video,
+    ...mediaArtwork(video),
+    copy: `${video.kind} de ${video.album}. Una pieza más del archivo que sigue respirando.`
+  }));
+  const items = [...featured, ...remaining];
+  if (!items.length) return;
+
+  let mediaIndex = 0;
+  let galleryIndex = 0;
+  let transitionTimer;
+  const cover = $('#media-cover');
+  const album = $('#media-album');
+  const group = $('#media-group');
+  const title = $('#media-title');
+  const copy = $('#media-copy');
+  const kind = $('#media-kind');
+  const watch = $('#media-watch');
+  const frame = $('#media-player');
+  const galleryImage = $('#media-gallery-image');
+  const galleryCaption = $('#media-gallery-caption');
+  const thumbs = $('#media-gallery-thumbs');
+  const coverNote = $('#media-cover-note');
+  const index = $('#media-index');
+  const total = $('#media-total');
+  const commentForm = $('#gallery-comment-form');
+  const commentStatus = $('#gallery-comment-status');
+
+  const renderGalleryThumbs = () => {
+    if (!thumbs) return;
+    thumbs.innerHTML = archive.slice(0, 6).map((item, itemIndex) => `<button class="media-thumb${itemIndex === galleryIndex ? ' is-active' : ''}" type="button" data-gallery-index="${itemIndex}" aria-label="Ver imagen ${itemIndex + 1}"><img loading="lazy" src="${assetUrl(item.src)}" alt=""></button>`).join('');
+  };
+
+  const renderGalleryState = () => {
+    if (!archive.length) return;
+    const image = archive[galleryIndex % archive.length];
+    if (galleryImage) { galleryImage.src = assetUrl(image.src); galleryImage.alt = image.alt; }
+    if (galleryCaption) galleryCaption.textContent = `${image.label} · ${image.title}`;
+    if (commentForm) commentForm.dataset.image = image.src;
+    renderGalleryThumbs();
+  };
+
+  const update = (direction = 0) => {
+    const item = items[mediaIndex];
+    const shell = $('.media-song-shell', root);
+    if (direction && root) {
+      root.classList.remove('is-transitioning');
+      window.requestAnimationFrame(() => root.classList.add('is-transitioning'));
+      window.clearTimeout(transitionTimer);
+      transitionTimer = window.setTimeout(() => root.classList.remove('is-transitioning'), 520);
+    }
+    if (cover) { cover.src = assetUrl(item.cover); cover.alt = item.coverAlt || `Arte de ${item.album} · ${item.title}`; }
+    if (coverNote) coverNote.textContent = item.coverKind || 'Arte del archivo';
+    if (album) album.textContent = item.album;
+    if (group) group.textContent = item.group;
+    if (title) title.textContent = item.title;
+    if (copy) copy.textContent = item.copy;
+    if (kind) kind.textContent = item.kind;
+    if (watch) { watch.href = `https://www.youtube.com/watch?v=${item.id}`; watch.setAttribute('aria-label', `Ver video oficial de ${item.title}`); }
+    if (frame) frame.innerHTML = `<iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${item.id}?rel=0" title="${item.title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+    if (index) index.textContent = String(mediaIndex + 1).padStart(2, '0');
+    if (total) total.textContent = String(items.length).padStart(2, '0');
+    renderGalleryState();
+  };
+
+  $$('[data-media-prev]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex - 1 + items.length) % items.length; update(-1); }));
+  $$('[data-media-next]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex + 1) % items.length; update(1); }));
+  root.addEventListener('click', (event) => {
+    const previous = event.target.closest('[data-gallery-prev]');
+    const next = event.target.closest('[data-gallery-next]');
+    if (previous) { galleryIndex = (galleryIndex - 1 + archive.length) % archive.length; renderGalleryState(); }
+    if (next) { galleryIndex = (galleryIndex + 1) % archive.length; renderGalleryState(); }
+  });
+  thumbs?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-gallery-index]');
+    if (!button) return;
+    galleryIndex = Number(button.dataset.galleryIndex) || 0;
+    renderGalleryState();
+  });
+  commentForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!commentStatus) return;
+    commentStatus.textContent = 'Enviando a revisión…';
+    const data = new FormData(commentForm);
+    const payload = { name: data.get('name'), email: data.get('email'), comment: data.get('comment'), image: commentForm.dataset.image || '' };
+    try {
+      const response = await fetch('/api/gallery-comment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.fallback ? 'El correo de revisión aún no está configurado.' : (result.error || 'No pudimos enviar el comentario.'));
+      commentStatus.textContent = 'Gracias. Tu comentario quedó pendiente de aprobación.';
+      commentForm.reset();
+    } catch (error) {
+      commentStatus.textContent = error.message;
+    }
+  });
+  const comments = $('#gallery-comments');
+  fetch('content/gallery-comments.json').then((response) => response.ok ? response.json() : []).then((approved) => {
+    if (!comments || !Array.isArray(approved) || !approved.length) return;
+    comments.innerHTML = `<p class="gallery-comments-label">Voces que han pasado por el archivo</p>${approved.map((item) => `<blockquote class="gallery-comment"><p>“${item.comment}”</p><cite>${item.name}</cite></blockquote>`).join('')}`;
+  }).catch(() => {});
+  let gestureStart = null;
+  const swipeTarget = $('.media-song-shell', root) || root;
+  const finishSwipe = (event) => {
+    if (!gestureStart || (event.pointerType && event.pointerType !== 'touch')) return;
+    const dx = event.clientX - gestureStart.x;
+    const dy = event.clientY - gestureStart.y;
+    const elapsed = performance.now() - gestureStart.time;
+    gestureStart = null;
+    swipeTarget.classList.remove('is-swipe-active');
+    if (elapsed > 900 || Math.abs(dx) < 32 || Math.abs(dx) < Math.abs(dy) * 1.05) return;
+    mediaIndex = dx < 0 ? (mediaIndex + 1) % items.length : (mediaIndex - 1 + items.length) % items.length;
+    update(dx < 0 ? 1 : -1);
+  };
+  swipeTarget.addEventListener('pointerdown', (event) => {
+    if (event.pointerType !== 'touch') return;
+    gestureStart = { x: event.clientX, y: event.clientY, time: performance.now() };
+    swipeTarget.classList.add('is-swipe-active');
+  }, { passive: true });
+  swipeTarget.addEventListener('pointerup', finishSwipe, { passive: true });
+  swipeTarget.addEventListener('pointercancel', () => {
+    gestureStart = null;
+    swipeTarget.classList.remove('is-swipe-active');
+  }, { passive: true });
+  root.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowRight') { mediaIndex = (mediaIndex + 1) % items.length; update(1); }
+    if (event.key === 'ArrowLeft') { mediaIndex = (mediaIndex - 1 + items.length) % items.length; update(-1); }
+  });
+  root.tabIndex = 0;
+  window.whbOpenProject = (projectName) => {
+    const target = items.findIndex((item) => item.group === projectName);
+    if (target >= 0) {
+      mediaIndex = target;
+      update();
+      document.querySelector('#media-video')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return true;
+    }
+    document.querySelector('#music')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const albumBlock = [...document.querySelectorAll('#audio-catalog .album-block')].find((block) => block.textContent.includes(projectName));
+    if (albumBlock) albumBlock.open = true;
+    return false;
+  };
+  update();
 }
 
 async function loadCatalog() {
@@ -193,13 +756,20 @@ async function loadCatalog() {
     renderAudio(catalog.audio || []);
     renderVideos(catalog.videos || []);
     renderGallery(catalog.gallery || []);
+    renderMedia(catalog);
+    document.addEventListener('click', (event) => {
+      const projectLink = event.target.closest('[data-project]');
+      if (!projectLink || typeof window.whbOpenProject !== 'function') return;
+      event.preventDefault();
+      window.whbOpenProject(projectLink.dataset.project);
+    });
   } catch (error) {
     console.warn('No se pudo cargar el catálogo.', error);
     $$('.loading').forEach((node) => { node.textContent = 'El archivo estará disponible en cuanto se conecte la fuente.'; });
   }
 }
 
-function initHeroOpening() {
+function initHeroOpening(ambient) {
   const opening = $('#hero-opening');
   const video = $('#hero-video');
   const enter = $('#hero-enter');
@@ -215,27 +785,79 @@ function initHeroOpening() {
     opening.remove();
     return;
   }
+  // Repetir estas propiedades evita que algunos navegadores móviles
+  // interpreten el archivo como una pieza con audio y bloqueen el autoplay.
+  video.muted = true;
+  video.defaultMuted = true;
+  video.autoplay = true;
   let finished = false;
-  const finish = () => {
-    if (finished) return;
-    finished = true;
+  let started = false;
+  let breathPlayed = false;
+  const playOpeningBreath = () => {
+    if (breathPlayed || finished || opening.classList.contains('is-hidden')) return;
+    ambient?.unlock();
+    breathPlayed = Boolean(ambient?.playOpeningBreath());
+  };
+  const hideOpening = () => {
+    opening.classList.remove('is-finishing');
     opening.classList.add('is-hidden');
     opening.setAttribute('aria-hidden', 'true');
     opening.removeAttribute('aria-modal');
     opening.setAttribute('inert', '');
     window.setTimeout(() => video.pause(), 900);
   };
-  enter?.addEventListener('click', finish);
+  const finish = ({ transition = false } = {}) => {
+    if (finished) return;
+    finished = true;
+    if (transition) {
+      opening.classList.add('is-finishing');
+      window.setTimeout(hideOpening, 650);
+      return;
+    }
+    hideOpening();
+  };
+  const keepPoster = () => {
+    if (finished || started) return;
+    opening.classList.add('video-fallback');
+    opening.querySelector('.hero-opening-kicker')?.replaceChildren(document.createTextNode('WHB Project · La loma está lista'));
+    if (enter) {
+      const label = enter.firstChild;
+      if (label && label.nodeType === Node.TEXT_NODE) label.textContent = 'Reproducir apertura ';
+      enter.setAttribute('aria-label', 'Reproducir apertura');
+    }
+  };
+  const start = () => {
+    if (finished || started) return;
+    video.play().then(() => {
+      started = true;
+      opening.classList.add('is-playing');
+      opening.classList.remove('video-fallback');
+      if (enter) {
+        const label = enter.firstChild;
+        if (label && label.nodeType === Node.TEXT_NODE) label.textContent = 'Entrar al campo ';
+        enter.setAttribute('aria-label', 'Entrar al campo');
+      }
+    }).catch(() => keepPoster());
+  };
+  enter?.addEventListener('click', () => {
+    playOpeningBreath();
+    if (!started && video.paused) {
+      start();
+      return;
+    }
+    finish();
+  });
   skip?.addEventListener('click', finish);
-  video.addEventListener('ended', finish, { once: true });
-  video.addEventListener('error', finish, { once: true });
+  video.addEventListener('ended', () => finish({ transition: true }), { once: true });
+  video.addEventListener('error', keepPoster, { once: true });
+  video.addEventListener('canplay', start, { once: true });
+  window.addEventListener('pointerdown', playOpeningBreath, { once: true, passive: true });
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape') finish(); }, { passive: true });
-  window.setTimeout(finish, 8600);
-  video.play().catch(() => finish(false));
+  window.setTimeout(() => { if (!started && !finished) keepPoster(); }, 2600);
+  if (video.readyState >= 3) start();
 }
 
 function initRemoteStaticAssets() {
-  if (!isHostedPreview()) return;
   $$('[data-asset]').forEach((element) => {
     const path = element.dataset.asset;
     if (path) element.setAttribute('src', assetUrl(path));
@@ -262,15 +884,21 @@ function initNavigation() {
     if (event.key === 'Escape') { nav?.classList.remove('is-open'); toggle?.setAttribute('aria-expanded', 'false'); }
   });
   const links = $$('.chapter-nav a');
+  const navigationTargets = $$('.chapter, [data-nav-anchor]');
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
-      links.forEach((link) => link.classList.toggle('is-active', link.dataset.section === entry.target.id));
+      const sectionId = entry.target.dataset.navAnchor || entry.target.id;
+      links.forEach((link) => link.classList.toggle('is-active', link.dataset.section === sectionId));
+      const current = $('#current-section');
+      const activeLink = links.find((link) => link.dataset.section === sectionId);
+      if (current && activeLink) current.textContent = activeLink.textContent.replace(/\s+/g, ' ').trim();
       const seasons = ['spring', 'summer', 'autumn', 'winter'];
-      document.body.dataset.season = seasons[Number(entry.target.dataset.chapter || 0) % seasons.length];
+      const chapter = entry.target.dataset.chapter || entry.target.closest('.chapter')?.dataset.chapter || 0;
+      document.body.dataset.season = seasons[Number(chapter) % seasons.length];
     });
   }, { threshold: .45 });
-  $$('.chapter').forEach((section) => observer.observe(section));
+  navigationTargets.forEach((section) => observer.observe(section));
 }
 
 function initReveal() {
@@ -320,20 +948,143 @@ function initCursor() {
   });
 }
 
+function initJournalReader() {
+  const dialog = $('#journal-reader');
+  const title = $('#journal-reader-title');
+  const body = $('#journal-reader-body');
+  const close = dialog?.querySelector('[data-journal-close]');
+  if (!dialog || !title || !body) return;
+  const escapeHtml = (value) => String(value).replace(/[&<>\"']/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;'
+  }[character]));
+  const inlineMarkdown = (value) => escapeHtml(value)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+  const renderMarkdown = (markdown) => {
+    const blocks = [];
+    let paragraph = [];
+    const flush = () => {
+      if (!paragraph.length) return;
+      blocks.push(`<p>${inlineMarkdown(paragraph.join(' '))}</p>`);
+      paragraph = [];
+    };
+    String(markdown).split(/\r?\n/).forEach((rawLine) => {
+      const line = rawLine.trim();
+      if (!line || /^\*\*(Fuente|Estado):/.test(line) || /^---+$/.test(line)) {
+        flush();
+        return;
+      }
+      if (/^# /.test(line)) { flush(); return; }
+      if (/^##? /.test(line)) {
+        flush();
+        blocks.push(`<h3>${inlineMarkdown(line.replace(/^##? /, ''))}</h3>`);
+        return;
+      }
+      paragraph.push(line);
+    });
+    flush();
+    return blocks.join('');
+  };
+  const open = async (button) => {
+    title.textContent = button.dataset.journalTitle || 'Lectura del cuaderno';
+    body.innerHTML = '<p class="loading">Abriendo el archivo…</p>';
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else dialog.setAttribute('open', '');
+    try {
+      const response = await fetch(`content/${button.dataset.journalFile}`);
+      if (!response.ok) throw new Error('journal unavailable');
+      body.innerHTML = renderMarkdown(await response.text());
+    } catch {
+      body.innerHTML = '<p>No pudimos abrir esta entrada en este momento. El extracto sigue disponible en la tarjeta.</p>';
+    }
+  };
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-journal-file]');
+    if (button) open(button);
+  });
+  close?.addEventListener('click', () => dialog.close?.());
+  dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close?.(); });
+  dialog.addEventListener('cancel', () => dialog.close?.());
+}
+
+function initBookingForm() {
+  const form = $('#booking-form');
+  const status = $('#booking-status');
+  if (!form) return;
+  const openMailFallback = (payload) => {
+    const subject = encodeURIComponent(`Solicitud WHB / 3FR · ${payload.request}`);
+    const body = encodeURIComponent([
+      `Nombre: ${payload.name}`,
+      `Correo: ${payload.email}`,
+      `Fecha tentativa: ${payload.date}`,
+      `Ciudad y lugar: ${payload.location}`,
+      `Solicitud: ${payload.request}`,
+      `Asistentes: ${payload.guests}`,
+      '',
+      'Contexto:',
+      payload.message || 'Sin detalles adicionales.'
+    ].join('\n'));
+    if (status) status.textContent = 'No hay recepción web configurada; abrimos tu correo con la solicitud preparada…';
+    window.location.href = `mailto:whbprojectmusic@gmail.com?subject=${subject}&body=${body}`;
+  };
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const payload = Object.fromEntries(['name', 'email', 'date', 'location', 'request', 'guests', 'message'].map((key) => [key, String(data.get(key) || '').trim()]));
+    if (status) status.textContent = 'Enviando tu solicitud…';
+    const submit = form.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+    try {
+      const response = await fetch('/api/booking', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.fallback) return openMailFallback(payload);
+      form.reset();
+      if (status) status.textContent = 'Solicitud recibida. Revisaremos agenda, ciudad y necesidades antes de responderte.';
+    } catch {
+      openMailFallback(payload);
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const wind = new WindField($('#windfield'));
   const windFront = new WindField($('#windfield-front'), true);
+  const ambient = new AmbientWind();
   const toggle = $('.sound-toggle');
+  const syncAmbientUI = (enabled, unlocked = ambient.unlocked) => {
+    toggle?.setAttribute('aria-pressed', String(enabled));
+    const listening = enabled && unlocked;
+    toggle?.setAttribute('aria-label', listening ? 'Silenciar sonido ambiente de la loma' : enabled ? 'Activar sonido ambiente de la loma (toca para iniciar)' : 'Activar sonido ambiente de la loma');
+    if (toggle) toggle.title = listening ? 'Ambiente activo: pájaros, río y piano suave.' : enabled ? 'Toca o haz clic una vez para iniciar el ambiente: pájaros, río y piano suave.' : 'Activar sonido ambiente de la loma';
+    const label = toggle?.querySelector('span:last-child');
+    if (label) label.textContent = listening ? 'Ambiente activo' : enabled ? 'Toca para escuchar' : 'Ambiente';
+    wind.setCalm(enabled);
+    windFront.setCalm(enabled);
+  };
+  const unlockAmbient = () => {
+    const wasUnlocked = ambient.unlocked;
+    ambient.unlock();
+    if (!wasUnlocked && ambient.unlocked) syncAmbientUI(ambient.enabled, true);
+  };
+  ['pointerdown', 'touchstart', 'keydown', 'wheel'].forEach((eventName) => {
+    window.addEventListener(eventName, unlockAmbient, { passive: true });
+  });
+  const defaultAmbient = ambient.setEnabled(true);
+  syncAmbientUI(defaultAmbient);
   toggle?.addEventListener('click', () => {
     const pressed = toggle.getAttribute('aria-pressed') === 'true';
-    toggle.setAttribute('aria-pressed', String(!pressed));
-    wind.setCalm(!pressed);
-    windFront.setCalm(!pressed);
-    toggle.querySelector('span:last-child').textContent = !pressed ? 'Calma' : 'Ambiente';
+    const enabled = !pressed;
+    const activated = ambient.setEnabled(enabled);
+    if (!activated && enabled) return;
+    if (enabled) ambient.unlock();
+    syncAmbientUI(enabled, ambient.unlocked);
   });
   $$('.filter').forEach((button) => button.addEventListener('click', async () => {
     $$('.filter').forEach((item) => item.classList.remove('is-active')); button.classList.add('is-active');
     const response = await fetch('content/catalog.json'); const catalog = await response.json(); renderVideos(catalog.videos || [], button.dataset.filter);
   }));
-  initNavigation(); initReveal(); initCursor(); initRemoteStaticAssets(); initHeroOpening(); loadCatalog();
+  initNavigation(); initReveal(); initCursor(); initJournalReader(); initBookingForm(); initRemoteStaticAssets(); initHeroOpening(ambient); loadCatalog();
+  if ('serviceWorker' in navigator && window.location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
 });

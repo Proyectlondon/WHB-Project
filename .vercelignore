@@ -1,0 +1,10 @@
+_archive/
+dist/
+node_modules/
+qa/
+tools/
+.git/
+.openai/
+*.md
+package.json
+package-lock.json
