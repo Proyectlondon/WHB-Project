@@ -635,6 +635,7 @@ function renderMedia(catalog) {
   const renderGalleryThumbs = () => {
     if (!thumbs) return;
     thumbs.innerHTML = archive.map((item, itemIndex) => `<button class="media-thumb${itemIndex === galleryIndex ? ' is-active' : ''}" type="button" data-gallery-index="${itemIndex}" aria-label="Ver imagen ${itemIndex + 1} de ${archive.length}"><img loading="lazy" src="${assetUrl(item.src)}" alt=""></button>`).join('');
+    thumbs.querySelector('.media-thumb.is-active')?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   };
 
   const renderGalleryState = () => {

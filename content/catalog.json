@@ -389,12 +389,6 @@
       "title": "La raíz permanece"
     },
     {
-      "src": "assets/images/son-del-monte.jpg",
-      "alt": "Fotografía de WHB Project en Son del Monte",
-      "label": "Fotografía · Son del Monte",
-      "title": "Donde la madera canta"
-    },
-    {
       "src": "assets/images/senor-escucha-mi-cantar.jpg",
       "alt": "Arte de Señor Escucha Mi Cantar",
       "label": "Poster · Señor Escucha Mi Cantar",
@@ -405,36 +399,6 @@
       "alt": "Arte de Mi Huertica Navideña",
       "label": "Arte · Mi Huertica Navideña",
       "title": "Una memoria de diciembre"
-    },
-    {
-      "src": "assets/images/40-dias-despues.jpg",
-      "alt": "Fotografía de 40 días después",
-      "label": "Fotografía · 40 días después",
-      "title": "La canción se vuelve paisaje"
-    },
-    {
-      "src": "assets/images/astillas-del-olivo.jpg",
-      "alt": "Fotografía de Astillas del Olivo",
-      "label": "Fotografía · Astillas del Olivo",
-      "title": "Madera, voz y semilla"
-    },
-    {
-      "src": "assets/images/con-tu-espiritu.jpg",
-      "alt": "Fotografía de Con tu Espíritu",
-      "label": "Fotografía · Con tu Espíritu",
-      "title": "El aire entre las voces"
-    },
-    {
-      "src": "assets/images/mi-dios-artesano.jpg",
-      "alt": "Fotografía de Mi Dios Artesano",
-      "label": "Fotografía · Mi Dios Artesano",
-      "title": "Oficio de canción"
-    },
-    {
-      "src": "assets/images/zamba-del-olivo-verde.jpg",
-      "alt": "Fotografía de Zamba del Olivo Verde",
-      "label": "Fotografía · Zamba del Olivo Verde",
-      "title": "Una raíz que se mueve"
     },
     {
       "src": "assets/images/photo-live-01.jpg",
@@ -510,9 +474,9 @@
     },
     {
       "src": "assets/images/gallery/con-tu-espiitu.jpg",
-      "alt": "Arte · WHB Project: Con tu Espíitu",
+      "alt": "Arte · WHB Project: Con tu Espíritu",
       "label": "Arte · WHB Project",
-      "title": "Con tu Espíitu"
+      "title": "Con tu Espíritu"
     },
     {
       "src": "assets/images/gallery/dios-esta-aqui.jpg",
