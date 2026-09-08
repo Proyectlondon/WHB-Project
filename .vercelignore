@@ -6,5 +6,6 @@ tools/
 .git/
 .openai/
 *.md
+!content/journal/*.md
 package.json
 package-lock.json
