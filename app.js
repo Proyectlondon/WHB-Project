@@ -689,10 +689,28 @@ function renderMedia(catalog) {
     commentStatus.textContent = 'Enviando a revisión…';
     const data = new FormData(commentForm);
     const payload = { name: data.get('name'), email: data.get('email'), comment: data.get('comment'), image: commentForm.dataset.image || '' };
+    const openMailFallback = () => {
+      const subject = encodeURIComponent(`Comentario para la galería WHB · ${payload.name}`);
+      const body = encodeURIComponent([
+        'Comentario pendiente de revisión para el archivo público de WHB.',
+        '',
+        `Nombre: ${payload.name}`,
+        `Correo: ${payload.email}`,
+        `Imagen: ${payload.image || 'Archivo WHB'}`,
+        '',
+        'Comentario:',
+        payload.comment,
+        '',
+        'La persona autorizó su publicación si el equipo lo aprueba.'
+      ].join('\n'));
+      commentStatus.textContent = 'Abrimos tu correo con el comentario preparado para revisión…';
+      window.location.href = `mailto:whbprojectmusic@gmail.com?subject=${subject}&body=${body}`;
+    };
     try {
       const response = await fetch('/api/gallery-comment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.fallback ? 'El correo de revisión aún no está configurado.' : (result.error || 'No pudimos enviar el comentario.'));
+      if (result.fallback) return openMailFallback();
+      if (!response.ok) throw new Error(result.error || 'No pudimos enviar el comentario.');
       commentStatus.textContent = 'Gracias. Tu comentario quedó pendiente de aprobación.';
       commentForm.reset();
     } catch (error) {
