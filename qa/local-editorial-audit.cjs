@@ -14,7 +14,7 @@ const { chromium } = require('playwright');
       provisionalEditorialNotes: document.querySelectorAll('.editorial-provisional').length,
       horizontalOverflow: document.body.scrollWidth > window.innerWidth
     }));
-    result.ok = result.journal && result.journalNav && result.services && result.contact && result.wixLinks === 0 && result.provisionalEditorialNotes === 2 && !result.horizontalOverflow;
+    result.ok = !result.journal && !result.journalNav && result.services && result.contact && result.wixLinks === 0 && result.provisionalEditorialNotes === 0 && !result.horizontalOverflow;
     console.log(JSON.stringify(result, null, 2));
     if (!result.ok) process.exitCode = 1;
   } finally {

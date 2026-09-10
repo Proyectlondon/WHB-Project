@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://whb-project.vercel.app/sitemap.xml

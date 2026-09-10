@@ -43,6 +43,34 @@ function mediaArtwork(video) {
   return MEDIA_ALBUM_ART[video.album] || MEDIA_COVER_FALLBACKS[video.group] || { cover: 'assets/images/son-del-monte.jpg', coverKind: 'Arte del archivo' };
 }
 
+function isAiArchiveItem(item) {
+  const haystack = [item?.src, item?.label, item?.title, item?.source].filter(Boolean).join(' ').toLowerCase();
+  return /(^|[\\/_ -])(complementary|generated-covers?|ai|ia|concept)([\\/. _-]|$)/i.test(haystack)
+    || /arte complementario|imagen generada|inteligencia artificial/.test(haystack);
+}
+
+function isUnverifiedAlbum(value) {
+  return /por confirmar|por definir|pendiente de confirmaci[oó]n/i.test(String(value || ''));
+}
+
+function displayAlbum(value, fallback = 'Archivo sonoro') {
+  return isUnverifiedAlbum(value) ? fallback : (value || fallback);
+}
+
+function videoEmbedUrl(id) {
+  const origin = window.location.origin && window.location.origin !== 'null' ? `&origin=${encodeURIComponent(window.location.origin)}` : '';
+  return `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1${origin}`;
+}
+
+function renderVideoFrame(frame, video, loading = 'lazy') {
+  if (!frame || !video) return;
+  if (window.location.protocol === 'file:') {
+    frame.innerHTML = `<div class="media-file-fallback"><img src="https://i.ytimg.com/vi/${video.id}/hqdefault.jpg" alt="Miniatura de ${video.title}" loading="eager"><div><p>El reproductor necesita abrirse desde un servidor local.</p><a class="text-link" href="https://www.youtube.com/watch?v=${video.id}" target="_blank" rel="noreferrer">Abrir video en YouTube <span>↗</span></a></div></div>`;
+    return;
+  }
+  frame.innerHTML = `<iframe loading="${loading}" src="${videoEmbedUrl(video.id)}" title="${video.title}" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+}
+
 class AmbientWind {
   constructor() {
     // Se solicita activo desde el inicio. Los navegadores que bloquean
@@ -440,7 +468,7 @@ function renderAudio(audio) {
   const root = $('#audio-catalog');
   if (!root) return;
   const groups = groupBy(audio, 'album');
-  root.innerHTML = `<div class="whb-player" id="whb-player" aria-label="Reproductor WHB Project"><div class="whb-player-meta"><span class="whb-player-kicker">AHORA SUENA</span><strong id="whb-player-title">Elige una Radio Version</strong><small id="whb-player-album">WHB Project · catálogo sonoro</small></div><div class="whb-player-controls"><button type="button" class="whb-player-button" data-audio-prev aria-label="Pista anterior">←</button><button type="button" class="whb-player-button whb-player-play" data-audio-play aria-label="Reproducir">▶</button><button type="button" class="whb-player-button" data-audio-next aria-label="Siguiente pista">→</button><div class="whb-player-progress"><input id="whb-player-progress" type="range" min="0" max="100" value="0" step="0.1" aria-label="Progreso de la pista"><div class="whb-player-times"><span id="whb-player-current">0:00</span><span id="whb-player-duration">0:00</span></div></div><label class="whb-player-volume" aria-label="Volumen"><span>◒</span><input id="whb-player-volume" type="range" min="0" max="1" value="0.8" step="0.05" aria-label="Volumen"></label></div><div class="whb-player-queue" role="group" aria-label="Modo de reproducción"><button type="button" class="whb-queue-button is-active" data-audio-queue="single">Una pista</button><button type="button" class="whb-queue-button" data-audio-queue="repeat-one">Repetir pista</button><button type="button" class="whb-queue-button" data-audio-queue="album">Reproducir álbum</button><button type="button" class="whb-queue-button" data-audio-queue="all">Todo en orden</button><button type="button" class="whb-queue-button" data-audio-queue="shuffle">Aleatorio</button><button type="button" class="whb-queue-button" data-audio-queue="repeat-all">Repetir todo</button><span id="whb-player-mode">Termina al finalizar</span></div><audio id="whb-audio" preload="metadata"></audio></div><div class="audio-search-wrap"><label class="audio-search" for="audio-search">Buscar en la loma<input id="audio-search" type="search" placeholder="Canción, álbum o proyecto" autocomplete="off"></label></div><div class="whb-mini-player" id="whb-mini-player" aria-label="Controles de reproducción rápida" hidden><div class="whb-mini-copy"><span>AHORA SUENA</span><strong id="whb-mini-title">Elige una canción</strong><small id="whb-mini-album">WHB Project</small></div><button type="button" class="whb-mini-button" data-audio-mini-prev aria-label="Pista anterior">←</button><button type="button" class="whb-mini-button whb-mini-play" data-audio-mini-play aria-label="Reproducir">▶</button><button type="button" class="whb-mini-button" data-audio-mini-next aria-label="Siguiente pista">→</button><button type="button" class="whb-mini-close" data-audio-mini-close aria-label="Ocultar reproductor">×</button></div>${Object.entries(groups).map(([album, tracks], albumIndex) => `<details class="album-block"${albumIndex === 0 ? ' open' : ''}><summary class="album-title"><span>${album}</span><span class="album-meta"><span>${tracks.length} ${tracks.length === 1 ? 'pista' : 'pistas'}</span><span class="album-toggle" aria-hidden="true"></span></span></summary><div class="album-track-list">${tracks.map((track, index) => `<button class="track" type="button" data-audio-index="${audio.indexOf(track)}"><span class="track-no">${String(index + 1).padStart(2, '0')}</span><span class="track-title">${track.title}</span><span class="track-play-mark" aria-hidden="true">▶</span></button>`).join('')}</div></details>`).join('')}`;
+  root.innerHTML = `<div class="whb-player" id="whb-player" aria-label="Reproductor WHB Project"><div class="whb-player-meta"><span class="whb-player-kicker">AHORA SUENA</span><strong id="whb-player-title">Elige una Radio Version</strong><small id="whb-player-album">WHB Project · catálogo sonoro</small></div><div class="whb-player-controls"><button type="button" class="whb-player-button" data-audio-prev aria-label="Pista anterior">←</button><button type="button" class="whb-player-button whb-player-play" data-audio-play aria-label="Reproducir">▶</button><button type="button" class="whb-player-button" data-audio-next aria-label="Siguiente pista">→</button><div class="whb-player-progress"><input id="whb-player-progress" type="range" min="0" max="100" value="0" step="0.1" aria-label="Progreso de la pista"><div class="whb-player-times"><span id="whb-player-current">0:00</span><span id="whb-player-duration">0:00</span></div></div><label class="whb-player-volume" aria-label="Volumen"><span>◒</span><input id="whb-player-volume" type="range" min="0" max="1" value="0.8" step="0.05" aria-label="Volumen"></label></div><div class="whb-player-queue" role="group" aria-label="Modo de reproducción"><button type="button" class="whb-queue-button is-active" data-audio-queue="single">Una pista</button><button type="button" class="whb-queue-button" data-audio-queue="repeat-one">Repetir pista</button><button type="button" class="whb-queue-button" data-audio-queue="album">Reproducir álbum</button><button type="button" class="whb-queue-button" data-audio-queue="all">Todo en orden</button><button type="button" class="whb-queue-button" data-audio-queue="shuffle">Aleatorio</button><button type="button" class="whb-queue-button" data-audio-queue="repeat-all">Repetir todo</button><span id="whb-player-mode">Termina al finalizar</span></div><audio id="whb-audio" preload="metadata"></audio></div><div class="audio-search-wrap"><label class="audio-search" for="audio-search">Buscar en la loma<input id="audio-search" type="search" placeholder="Canción, álbum o proyecto" autocomplete="off"></label></div><div class="whb-mini-player" id="whb-mini-player" aria-label="Controles de reproducción rápida" hidden><div class="whb-mini-copy"><span>AHORA SUENA</span><strong id="whb-mini-title">Elige una canción</strong><small id="whb-mini-album">WHB Project</small></div><button type="button" class="whb-mini-button" data-audio-mini-prev aria-label="Pista anterior">←</button><button type="button" class="whb-mini-button whb-mini-play" data-audio-mini-play aria-label="Reproducir">▶</button><button type="button" class="whb-mini-button" data-audio-mini-next aria-label="Siguiente pista">→</button><button type="button" class="whb-mini-close" data-audio-mini-close aria-label="Ocultar reproductor">×</button></div>${Object.entries(groups).map(([albumName, tracks], albumIndex) => `<details class="album-block"${albumIndex === 0 ? ' open' : ''}><summary class="album-title"><span>${displayAlbum(albumName)}</span><span class="album-meta"><span>${tracks.length} ${tracks.length === 1 ? 'pista' : 'pistas'}</span><span class="album-toggle" aria-hidden="true"></span></span></summary><div class="album-track-list">${tracks.map((track, index) => `<button class="track" type="button" data-audio-index="${audio.indexOf(track)}"><span class="track-no">${String(index + 1).padStart(2, '0')}</span><span class="track-title">${track.title}</span><span class="track-play-mark" aria-hidden="true">▶</span></button>`).join('')}</div></details>`).join('')}`;
   $('#audio-count').textContent = audio.length;
   const playerArtwork = document.createElement('div');
   playerArtwork.className = 'whb-player-art';
@@ -505,7 +533,7 @@ function renderAudio(audio) {
     audioElement.src = assetUrl(track.path);
     audioElement.load();
     title.textContent = track.title;
-    album.textContent = `${track.group || 'WHB Project'} · ${track.album}`;
+    album.textContent = `${track.group || 'WHB Project'} · ${displayAlbum(track.album)}`;
     if (artwork && track.art) { artwork.src = assetUrl(track.art); artwork.alt = `Arte de ${track.title}`; }
     progress.value = '0'; current.textContent = '0:00'; duration.textContent = '0:00';
     $$('[data-audio-index]', root).forEach((button) => button.classList.toggle('is-active', Number(button.dataset.audioIndex) === activeIndex));
@@ -584,21 +612,21 @@ function renderVideos(videos, filter = 'all') {
     const video = visible.find((item) => item.id === button.dataset.videoId);
     if (!video) return;
     const frame = button.closest('.video-frame');
-    frame.innerHTML = `<iframe loading="eager" src="https://www.youtube-nocookie.com/embed/${video.id}?rel=0" title="${video.title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+    renderVideoFrame(frame, video, 'eager');
   }, { once: true }));
 }
 
 function renderGallery(gallery) {
   const root = $('#gallery-grid');
   if (!root) return;
-  root.innerHTML = gallery.map((item) => `<figure class="gallery-tile"><img loading="lazy" src="${assetUrl(item.src)}" alt="${item.alt}"><figcaption class="gallery-caption"><span>${item.label}</span><b>${item.title}</b></figcaption></figure>`).join('');
+  root.innerHTML = gallery.filter((item) => !isAiArchiveItem(item)).map((item) => `<figure class="gallery-tile"><img loading="lazy" src="${assetUrl(item.src)}" alt="${item.alt}"><figcaption class="gallery-caption"><span>${item.label}</span><b>${item.title}</b></figcaption></figure>`).join('');
 }
 
 function renderMedia(catalog) {
   const root = $('#media-stage');
   if (!root) return;
   const videos = catalog.videos || [];
-  const archive = catalog.gallery || [];
+  const archive = (catalog.gallery || []).filter((item) => !isAiArchiveItem(item));
   const featured = MEDIA_FEATURES.map((feature) => {
     const video = videos.find((candidate) => candidate.title === feature.match || candidate.title.includes(feature.match));
     return video ? { ...feature, ...video } : null;
@@ -607,7 +635,7 @@ function renderMedia(catalog) {
   const remaining = videos.filter((video) => !featuredIds.has(video.id)).map((video) => ({
     ...video,
     ...mediaArtwork(video),
-    copy: `${video.kind} de ${video.album}. Una pieza más del archivo que sigue respirando.`
+    copy: `Registro audiovisual de “${video.title}”, publicado dentro de ${displayAlbum(video.album, video.group || 'WHB Project')}. Aquí puedes verlo completo y volver a la canción cuando quieras.`
   }));
   const items = [...featured, ...remaining];
   if (!items.length) return;
@@ -615,6 +643,7 @@ function renderMedia(catalog) {
   let mediaIndex = 0;
   let galleryIndex = 0;
   let transitionTimer;
+  let pendingScroll = null;
   const cover = $('#media-cover');
   const album = $('#media-album');
   const group = $('#media-group');
@@ -626,16 +655,40 @@ function renderMedia(catalog) {
   const galleryImage = $('#media-gallery-image');
   const galleryCaption = $('#media-gallery-caption');
   const thumbs = $('#media-gallery-thumbs');
+  const videoThumbs = $('#media-video-thumbs');
   const coverNote = $('#media-cover-note');
   const index = $('#media-index');
   const total = $('#media-total');
+  const galleryCount = $('#media-gallery-count');
   const commentForm = $('#gallery-comment-form');
   const commentStatus = $('#gallery-comment-status');
+
+  if (galleryCount) galleryCount.textContent = `Archivo WHB · ${archive.length} piezas`;
+
+  const renderVideoThumbs = () => {
+    if (!videoThumbs) return;
+    videoThumbs.innerHTML = items.map((item, itemIndex) => `<button class="media-video-thumb${itemIndex === mediaIndex ? ' is-active' : ''}" type="button" data-video-index="${itemIndex}" aria-label="Ver videoclip ${itemIndex + 1}: ${item.title}" aria-current="${itemIndex === mediaIndex ? 'true' : 'false'}"><img loading="lazy" src="https://i.ytimg.com/vi/${item.id}/mqdefault.jpg" alt=""><span><b>${String(itemIndex + 1).padStart(2, '0')}</b>${item.title}</span></button>`).join('');
+    const activeThumb = videoThumbs.querySelector('.media-video-thumb.is-active');
+    if (activeThumb) {
+      const target = activeThumb.getBoundingClientRect();
+      const strip = videoThumbs.getBoundingClientRect();
+      if (videoThumbs.scrollHeight > videoThumbs.clientHeight + 2) {
+        videoThumbs.scrollTo({ top: videoThumbs.scrollTop + target.top - strip.top - (videoThumbs.clientHeight - target.height) / 2, behavior: 'auto' });
+      } else {
+        videoThumbs.scrollTo({ left: videoThumbs.scrollLeft + target.left - strip.left - (videoThumbs.clientWidth - target.width) / 2, behavior: 'auto' });
+      }
+    }
+  };
 
   const renderGalleryThumbs = () => {
     if (!thumbs) return;
     thumbs.innerHTML = archive.map((item, itemIndex) => `<button class="media-thumb${itemIndex === galleryIndex ? ' is-active' : ''}" type="button" data-gallery-index="${itemIndex}" aria-label="Ver imagen ${itemIndex + 1} de ${archive.length}"><img loading="lazy" src="${assetUrl(item.src)}" alt=""></button>`).join('');
-    thumbs.querySelector('.media-thumb.is-active')?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    const activeThumb = thumbs.querySelector('.media-thumb.is-active');
+    if (activeThumb) {
+      const target = activeThumb.getBoundingClientRect();
+      const strip = thumbs.getBoundingClientRect();
+      thumbs.scrollTo({ left: thumbs.scrollLeft + target.left - strip.left - (thumbs.clientWidth - target.width) / 2, behavior: 'auto' });
+    }
   };
 
   const renderGalleryState = () => {
@@ -672,6 +725,8 @@ function renderMedia(catalog) {
 
   const update = (direction = 0) => {
     const item = items[mediaIndex];
+    const preservedScroll = pendingScroll ?? window.scrollY;
+    pendingScroll = null;
     const shell = $('.media-song-shell', root);
     if (direction && root) {
       root.classList.remove('is-transitioning');
@@ -686,15 +741,47 @@ function renderMedia(catalog) {
     if (title) title.textContent = item.title;
     if (copy) copy.textContent = item.copy;
     if (kind) kind.textContent = item.kind;
-    if (watch) { watch.href = `https://www.youtube.com/watch?v=${item.id}`; watch.setAttribute('aria-label', `Ver video oficial de ${item.title}`); }
-    if (frame) frame.innerHTML = `<iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${item.id}?rel=0" title="${item.title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+    if (watch) { watch.href = '#media-player'; watch.setAttribute('aria-label', `Ver video oficial de ${item.title} en la página`); }
+    renderVideoFrame(frame, item);
     if (index) index.textContent = String(mediaIndex + 1).padStart(2, '0');
     if (total) total.textContent = String(items.length).padStart(2, '0');
-    renderGalleryState();
+    renderVideoThumbs();
+    if (direction) {
+      const restore = () => window.scrollTo({ top: preservedScroll, left: window.scrollX, behavior: 'auto' });
+      window.requestAnimationFrame(restore);
+      window.setTimeout(restore, 120);
+      window.setTimeout(restore, 360);
+      window.setTimeout(restore, 620);
+    }
   };
 
-  $$('[data-media-prev]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex - 1 + items.length) % items.length; update(-1); }));
-  $$('[data-media-next]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex + 1) % items.length; update(1); }));
+  watch?.addEventListener('click', (event) => {
+    event.preventDefault();
+    frame?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    frame?.querySelector('iframe')?.focus({ preventScroll: true });
+  });
+
+  $$('[data-media-prev]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex - 1 + items.length) % items.length; window.requestAnimationFrame(() => update(-1)); }));
+  $$('[data-media-next]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex + 1) % items.length; window.requestAnimationFrame(() => update(1)); }));
+  $$('[data-media-prev], [data-media-next]').forEach((button) => {
+    button.tabIndex = -1;
+    button.addEventListener('pointerdown', (event) => { if (event.pointerType === 'mouse') { pendingScroll = window.scrollY; event.preventDefault(); } });
+    button.addEventListener('mousedown', (event) => { pendingScroll = window.scrollY; event.preventDefault(); });
+    button.addEventListener('focus', () => {
+      const focusScroll = window.scrollY;
+      window.requestAnimationFrame(() => window.scrollTo({ top: focusScroll, left: window.scrollX, behavior: 'auto' }));
+    });
+  });
+  document.addEventListener('mousedown', (event) => {
+    if (event.target.closest?.('.media-video-navigation [data-media-prev], .media-video-navigation [data-media-next]')) event.preventDefault();
+  }, true);
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest?.('.media-video-navigation [data-media-prev], .media-video-navigation [data-media-next]')) return;
+    const keepScroll = window.scrollY;
+    window.setTimeout(() => window.scrollTo({ top: keepScroll, left: window.scrollX, behavior: 'auto' }), 0);
+    window.setTimeout(() => window.scrollTo({ top: keepScroll, left: window.scrollX, behavior: 'auto' }), 140);
+    window.setTimeout(() => window.scrollTo({ top: keepScroll, left: window.scrollX, behavior: 'auto' }), 520);
+  }, true);
   const galleryRoot = $('#media-gallery');
   galleryRoot?.addEventListener('click', (event) => {
     const previous = event.target.closest('[data-gallery-prev]');
@@ -707,6 +794,12 @@ function renderMedia(catalog) {
     if (!button) return;
     galleryIndex = Number(button.dataset.galleryIndex) || 0;
     renderGalleryState();
+  });
+  videoThumbs?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-video-index]');
+    if (!button) return;
+    mediaIndex = Number(button.dataset.videoIndex) || 0;
+    window.requestAnimationFrame(() => update(1));
   });
   commentForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -745,7 +838,9 @@ function renderMedia(catalog) {
   const comments = $('#gallery-comments');
   fetch('content/gallery-comments.json').then((response) => response.ok ? response.json() : []).then((approved) => {
     if (!comments || !Array.isArray(approved) || !approved.length) return;
-    comments.innerHTML = `<p class="gallery-comments-label">Voces que han pasado por el archivo</p>${approved.map((item) => `<blockquote class="gallery-comment"><p>“${item.comment}”</p><cite>${item.name}</cite></blockquote>`).join('')}`;
+    comments.replaceChildren();
+    const label = document.createElement('p'); label.className = 'gallery-comments-label'; label.textContent = 'Voces que han pasado por el archivo'; comments.append(label);
+    approved.forEach((item) => { const quote = document.createElement('blockquote'); quote.className = 'gallery-comment'; const text = document.createElement('p'); text.textContent = `“${String(item.comment || '').slice(0, 800)}”`; const cite = document.createElement('cite'); cite.textContent = String(item.name || 'Visitante').slice(0, 80); quote.append(text, cite); comments.append(quote); });
   }).catch(() => {});
   let gestureStart = null;
   const swipeTarget = $('.media-song-shell', root) || root;
@@ -771,6 +866,8 @@ function renderMedia(catalog) {
     swipeTarget.classList.remove('is-swipe-active');
   }, { passive: true });
   root.addEventListener('keydown', (event) => {
+    if (event.target !== root) return;
+    event.preventDefault();
     if (event.key === 'ArrowRight') { mediaIndex = (mediaIndex + 1) % items.length; update(1); }
     if (event.key === 'ArrowLeft') { mediaIndex = (mediaIndex - 1 + items.length) % items.length; update(-1); }
   });
@@ -789,6 +886,7 @@ function renderMedia(catalog) {
     return false;
   };
   update();
+  renderGalleryState();
 }
 
 async function loadCatalog() {
@@ -808,6 +906,9 @@ async function loadCatalog() {
     });
   } catch (error) {
     console.warn('No se pudo cargar el catálogo.', error);
+    if (window.location.protocol === 'file:') {
+      renderVideoFrame($('#media-player'), { id: '-RHLsyCG-1U', title: '40 Días Después' });
+    }
     $$('.loading').forEach((node) => { node.textContent = 'El archivo estará disponible en cuanto se conecte la fuente.'; });
   }
 }
@@ -1097,8 +1198,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const ambient = new AmbientWind();
   const toggle = $('.sound-toggle');
   const syncAmbientUI = (enabled, unlocked = ambient.unlocked) => {
-    toggle?.setAttribute('aria-pressed', String(enabled));
     const listening = enabled && unlocked;
+    toggle?.setAttribute('aria-pressed', String(listening));
     toggle?.setAttribute('aria-label', listening ? 'Silenciar sonido ambiente de la loma' : enabled ? 'Activar sonido ambiente de la loma (toca para iniciar)' : 'Activar sonido ambiente de la loma');
     if (toggle) toggle.title = listening ? 'Ambiente activo: pájaros, río y piano suave.' : enabled ? 'Toca o haz clic una vez para iniciar el ambiente: pájaros, río y piano suave.' : 'Activar sonido ambiente de la loma';
     const label = toggle?.querySelector('span:last-child');
