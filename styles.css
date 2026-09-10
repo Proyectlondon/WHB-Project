@@ -439,6 +439,7 @@ body.has-mini-player{padding-bottom:92px}
 .aside-copy h3{margin-bottom:13px}
 .aside-links{flex-wrap:wrap;gap:16px;margin-top:20px}
 .audio-catalog{max-height:none;overflow:visible;padding-right:0;touch-action:pan-y;overscroll-behavior:auto}
+.audio-catalog,.audio-search-wrap{width:min(1120px,100%);margin-inline:auto}
 .whb-player{position:relative;top:auto}
 .whb-player-queue{align-items:center}
 .whb-player-queue #whb-player-mode{flex-basis:100%;margin-left:0;margin-top:2px}
