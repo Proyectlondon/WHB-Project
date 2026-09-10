@@ -5,6 +5,8 @@ qa/
 tools/
 .git/
 .openai/
+.env*
+!.env.example
 *.md
 !content/journal/*.md
 package.json
