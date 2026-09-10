@@ -471,6 +471,15 @@ body.has-mini-player{padding-bottom:92px}
   .media-panel{padding:18px}
 }
 
+/* La navegación lateral ocupa una columna propia en escritorio. Mantener
+   este margen evita que el reproductor, los formularios y las galerías
+   queden debajo de los capítulos 00–08. */
+@media (min-width:901px){
+  .chapter{
+    padding-right:calc(max(8vw, 110px) + clamp(120px, 8vw, 160px));
+  }
+}
+
 /* Última pasada de ergonomía: los controles conservan una huella táctil de 44 px. */
 .booking-form input,.booking-form select,.gallery-comment-form input{min-height:44px}
 .gallery-consent{min-height:44px;align-items:center}
