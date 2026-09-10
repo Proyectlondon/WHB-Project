@@ -813,7 +813,8 @@ function renderMedia(catalog) {
     }
   });
   const comments = $('#gallery-comments');
-  fetch('content/gallery-comments.json').then((response) => response.ok ? response.json() : []).then((approved) => {
+  const approvedComments = window.location.protocol === 'file:' ? Promise.resolve([]) : fetch('content/gallery-comments.json').then((response) => response.ok ? response.json() : []);
+  approvedComments.then((approved) => {
     if (!comments || !Array.isArray(approved) || !approved.length) return;
     comments.replaceChildren();
     const label = document.createElement('p'); label.className = 'gallery-comments-label'; label.textContent = 'Voces que han pasado por el archivo'; comments.append(label);
@@ -867,10 +868,24 @@ function renderMedia(catalog) {
 }
 
 async function loadCatalog() {
+  let catalog;
+  if (window.location.protocol === 'file:') {
+    catalog = window.WHB_CATALOG;
+  } else {
+    try {
+      const response = await fetch('content/catalog.json');
+      if (!response.ok) throw new Error('catalog unavailable');
+      catalog = await response.json();
+    } catch (error) {
+      catalog = window.WHB_CATALOG;
+      if (!catalog) console.warn('No se pudo cargar el catálogo.', error);
+    }
+  }
+  if (!catalog) {
+    $$('.loading').forEach((node) => { node.textContent = 'No pudimos abrir el catálogo. Intenta recargar la página.'; });
+    return;
+  }
   try {
-    const response = await fetch('content/catalog.json');
-    if (!response.ok) throw new Error('catalog unavailable');
-    const catalog = await response.json();
     renderAudio(catalog.audio || []);
     renderVideos(catalog.videos || []);
     renderGallery(catalog.gallery || []);
@@ -882,11 +897,8 @@ async function loadCatalog() {
       window.whbOpenProject(projectLink.dataset.project);
     });
   } catch (error) {
-    console.warn('No se pudo cargar el catálogo.', error);
-    if (window.location.protocol === 'file:') {
-      renderVideoFrame($('#media-player'), { id: '-RHLsyCG-1U', title: '40 Días Después' });
-    }
-    $$('.loading').forEach((node) => { node.textContent = 'El archivo estará disponible en cuanto se conecte la fuente.'; });
+    console.warn('No se pudo renderizar el catálogo.', error);
+    $$('.loading').forEach((node) => { node.textContent = 'No pudimos mostrar el catálogo completo. Intenta recargar la página.'; });
   }
 }
 
