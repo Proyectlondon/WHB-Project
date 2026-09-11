@@ -5,14 +5,14 @@ function assetUrl(path) {
 }
 
 const MEDIA_FEATURES = [
-  { match: '40 Días Después', cover: 'assets/images/poster-40-dias.png', coverKind: 'Portada oficial', copy: 'Una canción para atravesar la espera con la mirada puesta en la promesa.' },
-  { match: 'Astillas Del Olivo', cover: 'assets/images/poster-astillas.png', coverKind: 'Portada oficial', copy: 'Madera, memoria y una voz que encuentra luz en las pequeñas grietas.' },
-  { match: 'Con Tu Espíritu', cover: 'assets/images/con-tu-espiritu.jpg', coverKind: 'Arte del archivo', copy: 'El aire entre las voces: una oración popfolclor que se mueve despacio.' },
-  { match: 'Mi Dios Artesano', cover: 'assets/images/poster-mi-dios-artesano.png', coverKind: 'Portada oficial', copy: 'Una canción sobre el oficio de crear y la presencia que acompaña el camino.' },
-  { match: 'Mi Huertica', cover: 'assets/images/mi-huertica.jpg', coverKind: 'Arte del archivo', copy: 'Una memoria de diciembre que vuelve a sonar con calidez de casa.' },
-  { match: 'Señor Escucha Mi Cantar', cover: 'assets/images/poster-senor-escucha.png', coverKind: 'Portada oficial', copy: 'La voz se vuelve conversación: pedir, agradecer y seguir cantando.' },
-  { match: 'Zamba del Olivo Verde', cover: 'assets/images/poster-zamba.png', coverKind: 'Portada oficial', copy: 'Una raíz que se mueve entre el folclor, la celebración y la esperanza.' },
-  { match: 'Tengo Sed', cover: 'assets/images/poster-tengo-sed.png', coverKind: 'Portada oficial', copy: 'S.A.L. abre una grieta de rock alternativo para decir lo que arde.' }
+  { match: '40 Días Después', cover: 'assets/images/poster-40-dias.png', coverKind: 'Portada oficial' },
+  { match: 'Astillas Del Olivo', cover: 'assets/images/poster-astillas.png', coverKind: 'Portada oficial' },
+  { match: 'Con Tu Espíritu', cover: 'assets/images/con-tu-espiritu.jpg', coverKind: 'Arte del archivo' },
+  { match: 'Mi Dios Artesano', cover: 'assets/images/poster-mi-dios-artesano.png', coverKind: 'Portada oficial' },
+  { match: 'Mi Huertica', cover: 'assets/images/mi-huertica.jpg', coverKind: 'Arte del archivo' },
+  { match: 'Señor Escucha Mi Cantar', cover: 'assets/images/poster-senor-escucha.png', coverKind: 'Portada oficial' },
+  { match: 'Zamba del Olivo Verde', cover: 'assets/images/poster-zamba.png', coverKind: 'Portada oficial' },
+  { match: 'Tengo Sed', cover: 'assets/images/poster-tengo-sed.png', coverKind: 'Portada oficial' }
 ];
 
 const MEDIA_ALBUM_ART = {
@@ -629,13 +629,13 @@ function renderMedia(catalog) {
   const archive = (catalog.gallery || []).filter((item) => !isAiArchiveItem(item));
   const featured = MEDIA_FEATURES.map((feature) => {
     const video = videos.find((candidate) => candidate.title === feature.match || candidate.title.includes(feature.match));
-    return video ? { ...feature, ...video } : null;
+    return video ? { ...feature, ...video, copy: `Videoclip oficial de “${video.title}”. Puedes verlo aquí y volver a la música cuando quieras.` } : null;
   }).filter(Boolean);
   const featuredIds = new Set(featured.map((item) => item.id));
   const remaining = videos.filter((video) => !featuredIds.has(video.id)).map((video) => ({
     ...video,
     ...mediaArtwork(video),
-    copy: `Registro audiovisual de “${video.title}”, publicado dentro de ${displayAlbum(video.album, video.group || 'WHB Project')}. Aquí puedes verlo completo y volver a la canción cuando quieras.`
+    copy: `Videoclip oficial de “${video.title}”. Puedes verlo aquí y volver a la música cuando quieras.`
   }));
   const items = [...featured, ...remaining];
   if (!items.length) return;
@@ -643,7 +643,6 @@ function renderMedia(catalog) {
   let mediaIndex = 0;
   let galleryIndex = 0;
   let transitionTimer;
-  let pendingScroll = null;
   const cover = $('#media-cover');
   const album = $('#media-album');
   const group = $('#media-group');
@@ -723,10 +722,8 @@ function renderMedia(catalog) {
   lightbox?.querySelector('[data-lightbox-prev]')?.addEventListener('click', () => { galleryIndex = (galleryIndex - 1 + archive.length) % archive.length; renderGalleryState(); updateLightbox(); });
   lightbox?.querySelector('[data-lightbox-next]')?.addEventListener('click', () => { galleryIndex = (galleryIndex + 1) % archive.length; renderGalleryState(); updateLightbox(); });
 
-  const update = (direction = 0) => {
+  const update = (direction = 0, focusActiveVideo = false) => {
     const item = items[mediaIndex];
-    const preservedScroll = pendingScroll ?? window.scrollY;
-    pendingScroll = null;
     const shell = $('.media-song-shell', root);
     if (direction && root) {
       root.classList.remove('is-transitioning');
@@ -746,13 +743,7 @@ function renderMedia(catalog) {
     if (index) index.textContent = String(mediaIndex + 1).padStart(2, '0');
     if (total) total.textContent = String(items.length).padStart(2, '0');
     renderVideoThumbs();
-    if (direction) {
-      const restore = () => window.scrollTo({ top: preservedScroll, left: window.scrollX, behavior: 'auto' });
-      window.requestAnimationFrame(restore);
-      window.setTimeout(restore, 120);
-      window.setTimeout(restore, 360);
-      window.setTimeout(restore, 620);
-    }
+    if (focusActiveVideo) videoThumbs?.querySelector('.media-video-thumb.is-active')?.focus({ preventScroll: true });
   };
 
   watch?.addEventListener('click', (event) => {
@@ -761,27 +752,13 @@ function renderMedia(catalog) {
     frame?.querySelector('iframe')?.focus({ preventScroll: true });
   });
 
-  $$('[data-media-prev]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex - 1 + items.length) % items.length; window.requestAnimationFrame(() => update(-1)); }));
-  $$('[data-media-next]').forEach((button) => button.addEventListener('click', () => { mediaIndex = (mediaIndex + 1) % items.length; window.requestAnimationFrame(() => update(1)); }));
-  $$('[data-media-prev], [data-media-next]').forEach((button) => {
-    button.tabIndex = -1;
-    button.addEventListener('pointerdown', (event) => { if (event.pointerType === 'mouse') { pendingScroll = window.scrollY; event.preventDefault(); } });
-    button.addEventListener('mousedown', (event) => { pendingScroll = window.scrollY; event.preventDefault(); });
-    button.addEventListener('focus', () => {
-      const focusScroll = window.scrollY;
-      window.requestAnimationFrame(() => window.scrollTo({ top: focusScroll, left: window.scrollX, behavior: 'auto' }));
-    });
-  });
-  document.addEventListener('mousedown', (event) => {
-    if (event.target.closest?.('.media-video-navigation [data-media-prev], .media-video-navigation [data-media-next]')) event.preventDefault();
-  }, true);
-  document.addEventListener('click', (event) => {
-    if (!event.target.closest?.('.media-video-navigation [data-media-prev], .media-video-navigation [data-media-next]')) return;
-    const keepScroll = window.scrollY;
-    window.setTimeout(() => window.scrollTo({ top: keepScroll, left: window.scrollX, behavior: 'auto' }), 0);
-    window.setTimeout(() => window.scrollTo({ top: keepScroll, left: window.scrollX, behavior: 'auto' }), 140);
-    window.setTimeout(() => window.scrollTo({ top: keepScroll, left: window.scrollX, behavior: 'auto' }), 520);
-  }, true);
+  const changeMedia = (direction, button) => {
+    button?.focus({ preventScroll: true });
+    mediaIndex = direction < 0 ? (mediaIndex - 1 + items.length) % items.length : (mediaIndex + 1) % items.length;
+    window.requestAnimationFrame(() => update(direction));
+  };
+  $$('[data-media-prev]').forEach((button) => button.addEventListener('click', (event) => { event.preventDefault(); changeMedia(-1, button); }));
+  $$('[data-media-next]').forEach((button) => button.addEventListener('click', (event) => { event.preventDefault(); changeMedia(1, button); }));
   const galleryRoot = $('#media-gallery');
   galleryRoot?.addEventListener('click', (event) => {
     const previous = event.target.closest('[data-gallery-prev]');
@@ -799,7 +776,7 @@ function renderMedia(catalog) {
     const button = event.target.closest('[data-video-index]');
     if (!button) return;
     mediaIndex = Number(button.dataset.videoIndex) || 0;
-    window.requestAnimationFrame(() => update(1));
+    window.requestAnimationFrame(() => update(1, true));
   });
   commentForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -836,7 +813,8 @@ function renderMedia(catalog) {
     }
   });
   const comments = $('#gallery-comments');
-  fetch('content/gallery-comments.json').then((response) => response.ok ? response.json() : []).then((approved) => {
+  const approvedComments = window.location.protocol === 'file:' ? Promise.resolve([]) : fetch('content/gallery-comments.json').then((response) => response.ok ? response.json() : []);
+  approvedComments.then((approved) => {
     if (!comments || !Array.isArray(approved) || !approved.length) return;
     comments.replaceChildren();
     const label = document.createElement('p'); label.className = 'gallery-comments-label'; label.textContent = 'Voces que han pasado por el archivo'; comments.append(label);
@@ -890,10 +868,24 @@ function renderMedia(catalog) {
 }
 
 async function loadCatalog() {
+  let catalog;
+  if (window.location.protocol === 'file:') {
+    catalog = window.WHB_CATALOG;
+  } else {
+    try {
+      const response = await fetch('content/catalog.json');
+      if (!response.ok) throw new Error('catalog unavailable');
+      catalog = await response.json();
+    } catch (error) {
+      catalog = window.WHB_CATALOG;
+      if (!catalog) console.warn('No se pudo cargar el catálogo.', error);
+    }
+  }
+  if (!catalog) {
+    $$('.loading').forEach((node) => { node.textContent = 'No pudimos abrir el catálogo. Intenta recargar la página.'; });
+    return;
+  }
   try {
-    const response = await fetch('content/catalog.json');
-    if (!response.ok) throw new Error('catalog unavailable');
-    const catalog = await response.json();
     renderAudio(catalog.audio || []);
     renderVideos(catalog.videos || []);
     renderGallery(catalog.gallery || []);
@@ -905,11 +897,8 @@ async function loadCatalog() {
       window.whbOpenProject(projectLink.dataset.project);
     });
   } catch (error) {
-    console.warn('No se pudo cargar el catálogo.', error);
-    if (window.location.protocol === 'file:') {
-      renderVideoFrame($('#media-player'), { id: '-RHLsyCG-1U', title: '40 Días Después' });
-    }
-    $$('.loading').forEach((node) => { node.textContent = 'El archivo estará disponible en cuanto se conecte la fuente.'; });
+    console.warn('No se pudo renderizar el catálogo.', error);
+    $$('.loading').forEach((node) => { node.textContent = 'No pudimos mostrar el catálogo completo. Intenta recargar la página.'; });
   }
 }
 
@@ -1230,5 +1219,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const response = await fetch('content/catalog.json'); const catalog = await response.json(); renderVideos(catalog.videos || [], button.dataset.filter);
   }));
   initNavigation(); initReveal(); initCursor(); initJournalReader(); initBookingForm(); initRemoteStaticAssets(); initHeroOpening(ambient); loadCatalog();
-  if ('serviceWorker' in navigator && window.location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
+  const isLocalPreview = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || isLocalPreview)) {
+    navigator.serviceWorker.register('./sw.js').then((registration) => registration.update()).catch(() => {});
+  }
 });
+
