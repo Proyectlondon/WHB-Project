@@ -99,8 +99,8 @@ class AmbientWind {
       audio.muted = true;
       audio.setAttribute('aria-hidden', 'true');
     });
-    this.birds.volume = .28;
-    this.river.volume = .2;
+    this.birds.volume = .34;
+    this.river.volume = .24;
     return true;
   }
   createAtmosphere() {
@@ -185,7 +185,11 @@ class AmbientWind {
     this.pianoTimer = window.setInterval(playChord, 9500);
   }
   playOpeningBreath() {
-    if (!this.enabled || !this.unlocked || !this.atmosphereContext || this.openingBreathPlayed) return false;
+    if (!this.enabled || !this.atmosphereContext || this.openingBreathPlayed) return false;
+    if (!this.unlocked) {
+      this.unlock().then((unlocked) => { if (unlocked) this.playOpeningBreath(); });
+      return true;
+    }
     this.openingBreathPlayed = true;
     const context = this.atmosphereContext;
     const start = context.currentTime + .04;
@@ -238,20 +242,31 @@ class AmbientWind {
     fadeNativeAudio(this.river, .08, 420);
     window.setTimeout(() => {
       if (!this.enabled) return;
-      fadeNativeAudio(this.birds, .28, 850);
-      fadeNativeAudio(this.river, .2, 850);
+      fadeNativeAudio(this.birds, .34, 850);
+      fadeNativeAudio(this.river, .24, 850);
     }, 2900);
     return true;
   }
   unlock() {
-    if (!this.enabled || !this.birds || this.unlocked) return;
-    this.unlocked = true;
-    [this.birds, this.river].forEach((audio) => { audio.muted = false; });
-    Promise.all([this.birds.play(), this.river.play()]).catch(() => {});
-    this.createAtmosphere();
-    if (this.atmosphereGain && this.atmosphereContext) this.atmosphereGain.gain.setTargetAtTime(.006, this.atmosphereContext.currentTime, .12);
-    if (this.pianoGain && this.atmosphereContext) this.pianoGain.gain.setTargetAtTime(.028, this.atmosphereContext.currentTime, .18);
-    this.atmosphereContext?.resume().catch(() => {});
+    if (!this.enabled || !this.birds) return Promise.resolve(false);
+    if (this.unlocked) return Promise.resolve(true);
+    const sources = [this.birds, this.river];
+    sources.forEach((audio) => { audio.muted = false; });
+    // Only mark the landscape as unlocked after both native tracks have
+    // actually accepted playback. This keeps a rejected first gesture
+    // retryable on the next tap instead of leaving a false active state.
+    return Promise.all(sources.map((audio) => audio.play())).then(() => {
+      this.unlocked = true;
+      this.createAtmosphere();
+      if (this.atmosphereGain && this.atmosphereContext) this.atmosphereGain.gain.setTargetAtTime(.006, this.atmosphereContext.currentTime, .12);
+      if (this.pianoGain && this.atmosphereContext) this.pianoGain.gain.setTargetAtTime(.028, this.atmosphereContext.currentTime, .18);
+      this.atmosphereContext?.resume().catch(() => {});
+      return true;
+    }).catch(() => {
+      sources.forEach((audio) => { audio.muted = true; });
+      this.unlocked = false;
+      return false;
+    });
   }
   setEnabled(enabled) {
     if (!this.birds && !this.create()) return false;
@@ -683,8 +698,10 @@ function renderMedia(catalog) {
   const index = $('#media-index');
   const total = $('#media-total');
   const galleryCount = $('#media-gallery-count');
+  const galleryView = $('.media-gallery-view', root);
   const commentForm = $('#gallery-comment-form');
   const commentStatus = $('#gallery-comment-status');
+  let galleryTransitionTimer;
 
   if (galleryCount) galleryCount.textContent = `Archivo WHB · ${archive.length} piezas`;
 
@@ -738,9 +755,16 @@ function renderMedia(catalog) {
     syncGalleryThumbs();
   };
 
-  const renderGalleryState = () => {
+  const renderGalleryState = (direction = 0) => {
     if (!archive.length) return;
     const image = archive[galleryIndex % archive.length];
+    if (direction && galleryView) {
+      galleryView.classList.remove('is-transitioning', 'is-forward', 'is-backward');
+      galleryView.classList.add(direction > 0 ? 'is-forward' : 'is-backward');
+      window.requestAnimationFrame(() => galleryView.classList.add('is-transitioning'));
+      window.clearTimeout(galleryTransitionTimer);
+      galleryTransitionTimer = window.setTimeout(() => galleryView.classList.remove('is-transitioning', 'is-forward', 'is-backward'), 520);
+    }
     if (galleryImage) { galleryImage.src = assetUrl(image.src); galleryImage.alt = image.alt; }
     if (galleryCaption) galleryCaption.textContent = `${image.label} · ${image.title}`;
     if (commentForm) commentForm.dataset.image = image.src;
@@ -777,7 +801,7 @@ function renderMedia(catalog) {
   lightbox?.addEventListener('cancel', () => lightbox.close?.());
   const changeGallery = (direction) => {
     galleryIndex = (galleryIndex + direction + archive.length) % archive.length;
-    renderGalleryState();
+    renderGalleryState(direction);
     if (lightbox?.open) updateLightbox();
   };
   lightbox?.querySelector('[data-lightbox-prev]')?.addEventListener('click', () => changeGallery(-1));
@@ -787,10 +811,11 @@ function renderMedia(catalog) {
     const item = items[mediaIndex];
     const shell = $('.media-song-shell', root);
     if (direction && root) {
-      root.classList.remove('is-transitioning');
+      root.classList.remove('is-transitioning', 'is-forward', 'is-backward');
+      root.classList.add(direction > 0 ? 'is-forward' : 'is-backward');
       window.requestAnimationFrame(() => root.classList.add('is-transitioning'));
       window.clearTimeout(transitionTimer);
-      transitionTimer = window.setTimeout(() => root.classList.remove('is-transitioning'), 520);
+      transitionTimer = window.setTimeout(() => root.classList.remove('is-transitioning', 'is-forward', 'is-backward'), 620);
     }
     if (cover) { cover.src = assetUrl(item.cover); cover.alt = item.coverAlt || `Arte de ${item.album} · ${item.title}`; }
     if (coverNote) coverNote.textContent = item.coverKind || 'Arte del archivo';
@@ -830,8 +855,10 @@ function renderMedia(catalog) {
   thumbs?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-gallery-index]');
     if (!button) return;
-    galleryIndex = Number(button.dataset.galleryIndex) || 0;
-    renderGalleryState();
+    const nextIndex = Number(button.dataset.galleryIndex) || 0;
+    const direction = nextIndex === galleryIndex ? 0 : (nextIndex > galleryIndex ? 1 : -1);
+    galleryIndex = nextIndex;
+    renderGalleryState(direction);
   });
 
   const bindGallerySwipe = (target) => {
@@ -871,9 +898,9 @@ function renderMedia(catalog) {
       const dy = event.clientY - start.y;
       const elapsed = performance.now() - start.time;
       const pointerType = start.pointerType;
-        start = null;
-        target.classList.remove('is-dragging');
-        const maxGestureTime = pointerType === 'mouse' ? Infinity : 800;
+      start = null;
+      target.classList.remove('is-dragging');
+      const maxGestureTime = pointerType === 'mouse' ? Infinity : 800;
       if (elapsed > maxGestureTime || Math.abs(dx) < 42 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
       suppressGalleryClickUntil = performance.now() + 420;
       changeGallery(dx < 0 ? 1 : -1);
@@ -1343,9 +1370,9 @@ document.addEventListener('DOMContentLoaded', () => {
     windFront.setCalm(enabled);
   };
   const unlockAmbient = () => {
-    const wasUnlocked = ambient.unlocked;
-    ambient.unlock();
-    if (!wasUnlocked && ambient.unlocked) syncAmbientUI(ambient.enabled, true);
+    ambient.unlock().then((unlocked) => {
+      if (unlocked) syncAmbientUI(ambient.enabled, true);
+    });
   };
   ['pointerdown', 'touchstart', 'keydown', 'wheel'].forEach((eventName) => {
     window.addEventListener(eventName, unlockAmbient, { passive: true });
@@ -1357,8 +1384,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const enabled = !pressed;
     const activated = ambient.setEnabled(enabled);
     if (!activated && enabled) return;
-    if (enabled) ambient.unlock();
-    syncAmbientUI(enabled, ambient.unlocked);
+    if (enabled) {
+      ambient.unlock().then((unlocked) => syncAmbientUI(enabled, unlocked));
+    } else {
+      syncAmbientUI(false, false);
+    }
   });
   $$('.filter').forEach((button) => button.addEventListener('click', async () => {
     $$('.filter').forEach((item) => item.classList.remove('is-active')); button.classList.add('is-active');
