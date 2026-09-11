@@ -1370,3 +1370,4 @@ document.addEventListener('DOMContentLoaded', () => {
     navigator.serviceWorker.register('./sw.js').then((registration) => registration.update()).catch(() => {});
   }
 });
+

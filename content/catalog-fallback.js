@@ -577,4 +577,3 @@ window.WHB_CATALOG = {
     }
   ]
 };
-
