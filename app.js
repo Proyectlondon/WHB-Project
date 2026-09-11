@@ -281,6 +281,11 @@ class WindField {
     this.foreground = foreground;
     this.ctx = canvas.getContext('2d', { alpha: true });
     this.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    this.running = true;
+    this.frameHandle = 0;
+    this.lastFrame = 0;
+    this.frameInterval = this.reduced ? 1000 / 12 : (this.coarsePointer ? 1000 / 30 : 0);
     this.pointer = { x: -999, y: -999, active: false, vx: 0, vy: 0, lastTime: 0 };
     this.gust = 0;
     this.calm = false;
@@ -353,12 +358,24 @@ class WindField {
     }, { passive: true });
     window.addEventListener('touchend', releasePointer, { passive: true });
     window.addEventListener('touchcancel', releasePointer, { passive: true });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.running = false;
+        window.cancelAnimationFrame(this.frameHandle);
+        return;
+      }
+      if (!this.running) {
+        this.running = true;
+        this.lastFrame = 0;
+        this.frameHandle = window.requestAnimationFrame(this.frame);
+      }
+    });
     this.resize();
     this.seed();
-    requestAnimationFrame(this.frame);
+    this.frameHandle = window.requestAnimationFrame(this.frame);
   }
   resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, this.coarsePointer ? 1.25 : 1.75);
     this.width = window.innerWidth;
     this.height = window.innerHeight;
     this.canvas.width = Math.round(this.width * dpr);
@@ -369,7 +386,8 @@ class WindField {
     this.seed();
   }
   seed() {
-    const base = this.reduced ? 16 : (this.width < 560 ? (this.foreground ? 16 : 50) : (this.foreground ? 38 : 148));
+    const compact = this.coarsePointer || this.width < 900;
+    const base = this.reduced ? 16 : (this.width < 560 ? (this.foreground ? 14 : 42) : (compact ? (this.foreground ? 20 : 62) : (this.foreground ? 38 : 148)));
     this.particles = Array.from({ length: base }, (_, index) => {
       const depth = index < Math.round(base * .53) ? 0 : (index < Math.round(base * .86) ? 1 : 2);
       const edge = this.foreground ? index < Math.round(base * .72) : Math.random() < .64;
@@ -420,6 +438,12 @@ class WindField {
     ctx.fillStyle = `rgba(214,156,45,${alpha + .08})`; ctx.beginPath(); ctx.arc(p.size * .2, 0, p.size * .32, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
   frame(time) {
+    if (!this.running) return;
+    if (this.frameInterval && time - this.lastFrame < this.frameInterval) {
+      this.frameHandle = window.requestAnimationFrame(this.frame);
+      return;
+    }
+    this.lastFrame = time;
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.width, this.height);
     const pointer = this.pointer;
@@ -455,7 +479,7 @@ class WindField {
       if (p.leaf) this.drawLeaf(p); else this.drawDandelion(p);
     }
     this.gust *= .93;
-    requestAnimationFrame(this.frame);
+    this.frameHandle = window.requestAnimationFrame(this.frame);
   }
   setCalm(value) { this.calm = value; }
 }
@@ -664,9 +688,13 @@ function renderMedia(catalog) {
 
   if (galleryCount) galleryCount.textContent = `Archivo WHB · ${archive.length} piezas`;
 
-  const renderVideoThumbs = () => {
+  const syncVideoThumbs = () => {
     if (!videoThumbs) return;
-    videoThumbs.innerHTML = items.map((item, itemIndex) => `<button class="media-video-thumb${itemIndex === mediaIndex ? ' is-active' : ''}" type="button" data-video-index="${itemIndex}" aria-label="Ver videoclip ${itemIndex + 1}: ${item.title}" aria-current="${itemIndex === mediaIndex ? 'true' : 'false'}"><img loading="lazy" src="https://i.ytimg.com/vi/${item.id}/mqdefault.jpg" alt=""><span><b>${String(itemIndex + 1).padStart(2, '0')}</b>${item.title}</span></button>`).join('');
+    videoThumbs.querySelectorAll('[data-video-index]').forEach((thumb) => {
+      const active = Number(thumb.dataset.videoIndex) === mediaIndex;
+      thumb.classList.toggle('is-active', active);
+      thumb.setAttribute('aria-current', String(active));
+    });
     const activeThumb = videoThumbs.querySelector('.media-video-thumb.is-active');
     if (activeThumb) {
       const target = activeThumb.getBoundingClientRect();
@@ -679,15 +707,35 @@ function renderMedia(catalog) {
     }
   };
 
-  const renderGalleryThumbs = () => {
+  const renderVideoThumbs = () => {
+    if (!videoThumbs) return;
+    if (videoThumbs.querySelectorAll('[data-video-index]').length !== items.length) {
+      videoThumbs.innerHTML = items.map((item, itemIndex) => `<button class="media-video-thumb" type="button" data-video-index="${itemIndex}" aria-label="Ver videoclip ${itemIndex + 1}: ${item.title}"><img loading="lazy" src="https://i.ytimg.com/vi/${item.id}/mqdefault.jpg" alt=""><span><b>${String(itemIndex + 1).padStart(2, '0')}</b>${item.title}</span></button>`).join('');
+    }
+    syncVideoThumbs();
+  };
+
+  const syncGalleryThumbs = () => {
     if (!thumbs) return;
-    thumbs.innerHTML = archive.map((item, itemIndex) => `<button class="media-thumb${itemIndex === galleryIndex ? ' is-active' : ''}" type="button" data-gallery-index="${itemIndex}" aria-label="Ver imagen ${itemIndex + 1} de ${archive.length}"><img loading="lazy" src="${assetUrl(item.src)}" alt=""></button>`).join('');
+    thumbs.querySelectorAll('[data-gallery-index]').forEach((thumb) => {
+      const active = Number(thumb.dataset.galleryIndex) === galleryIndex;
+      thumb.classList.toggle('is-active', active);
+      thumb.setAttribute('aria-current', String(active));
+    });
     const activeThumb = thumbs.querySelector('.media-thumb.is-active');
     if (activeThumb) {
       const target = activeThumb.getBoundingClientRect();
       const strip = thumbs.getBoundingClientRect();
       thumbs.scrollTo({ left: thumbs.scrollLeft + target.left - strip.left - (thumbs.clientWidth - target.width) / 2, behavior: 'auto' });
     }
+  };
+
+  const renderGalleryThumbs = () => {
+    if (!thumbs) return;
+    if (thumbs.querySelectorAll('[data-gallery-index]').length !== archive.length) {
+      thumbs.innerHTML = archive.map((item, itemIndex) => `<button class="media-thumb" type="button" data-gallery-index="${itemIndex}" aria-label="Ver imagen ${itemIndex + 1} de ${archive.length}"><img loading="lazy" src="${assetUrl(item.src)}" alt=""></button>`).join('');
+    }
+    syncGalleryThumbs();
   };
 
   const renderGalleryState = () => {
@@ -697,6 +745,10 @@ function renderMedia(catalog) {
     if (galleryCaption) galleryCaption.textContent = `${image.label} · ${image.title}`;
     if (commentForm) commentForm.dataset.image = image.src;
     renderGalleryThumbs();
+    [-1, 1].forEach((offset) => {
+      const nearby = archive[(galleryIndex + offset + archive.length) % archive.length];
+      if (nearby) { const preload = new Image(); preload.src = assetUrl(nearby.src); }
+    });
   };
 
   const lightbox = $('#gallery-lightbox');
@@ -714,13 +766,22 @@ function renderMedia(catalog) {
     if (typeof lightbox.showModal === 'function') lightbox.showModal();
     else lightbox.setAttribute('open', '');
   };
-  galleryImage?.addEventListener('click', openLightbox);
+  let suppressGalleryClickUntil = 0;
+  galleryImage?.addEventListener('click', (event) => {
+    if (performance.now() < suppressGalleryClickUntil) { event.preventDefault(); return; }
+    openLightbox();
+  });
   galleryImage?.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openLightbox(); } });
   lightbox?.querySelector('[data-gallery-close]')?.addEventListener('click', () => lightbox.close?.());
   lightbox?.addEventListener('click', (event) => { if (event.target === lightbox) lightbox.close?.(); });
   lightbox?.addEventListener('cancel', () => lightbox.close?.());
-  lightbox?.querySelector('[data-lightbox-prev]')?.addEventListener('click', () => { galleryIndex = (galleryIndex - 1 + archive.length) % archive.length; renderGalleryState(); updateLightbox(); });
-  lightbox?.querySelector('[data-lightbox-next]')?.addEventListener('click', () => { galleryIndex = (galleryIndex + 1) % archive.length; renderGalleryState(); updateLightbox(); });
+  const changeGallery = (direction) => {
+    galleryIndex = (galleryIndex + direction + archive.length) % archive.length;
+    renderGalleryState();
+    if (lightbox?.open) updateLightbox();
+  };
+  lightbox?.querySelector('[data-lightbox-prev]')?.addEventListener('click', () => changeGallery(-1));
+  lightbox?.querySelector('[data-lightbox-next]')?.addEventListener('click', () => changeGallery(1));
 
   const update = (direction = 0, focusActiveVideo = false) => {
     const item = items[mediaIndex];
@@ -763,8 +824,8 @@ function renderMedia(catalog) {
   galleryRoot?.addEventListener('click', (event) => {
     const previous = event.target.closest('[data-gallery-prev]');
     const next = event.target.closest('[data-gallery-next]');
-    if (previous) { galleryIndex = (galleryIndex - 1 + archive.length) % archive.length; renderGalleryState(); }
-    if (next) { galleryIndex = (galleryIndex + 1) % archive.length; renderGalleryState(); }
+    if (previous) changeGallery(-1);
+    if (next) changeGallery(1);
   });
   thumbs?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-gallery-index]');
@@ -772,6 +833,64 @@ function renderMedia(catalog) {
     galleryIndex = Number(button.dataset.galleryIndex) || 0;
     renderGalleryState();
   });
+
+  const bindGallerySwipe = (target) => {
+    if (!target) return;
+    let start = null;
+    const beginGesture = (event, pointerType, pointerId) => {
+      if (start || (pointerType === 'mouse' && event.button !== 0)) return;
+      const nestedControl = event.target.closest('button,a,input,textarea,select');
+      if (!['touch', 'mouse', 'pen'].includes(pointerType) || (nestedControl && nestedControl !== target)) return;
+      start = { x: event.clientX, y: event.clientY, time: performance.now(), pointerId, pointerType };
+      target.classList.add('is-dragging');
+      if (pointerId !== 'mouse-fallback') {
+        try { target.setPointerCapture(pointerId); } catch { /* Pointer capture is optional on some touch browsers. */ }
+      }
+    };
+    target.addEventListener('pointerdown', (event) => {
+      beginGesture(event, event.pointerType, event.pointerId);
+    }, { passive: true });
+    // Respaldo para navegadores o trackpads que emiten el gesto como mouse
+    // sin conservar Pointer Events durante el arrastre.
+    target.addEventListener('mousedown', (event) => beginGesture(event, 'mouse', 'mouse-fallback'), { passive: true });
+    target.addEventListener('mousemove', (event) => {
+      if (!start || start.pointerType !== 'mouse') return;
+      const dx = event.clientX - start.x;
+      const dy = event.clientY - start.y;
+      if (Math.abs(dx) < 42 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+      start = null;
+      target.classList.remove('is-dragging');
+      suppressGalleryClickUntil = performance.now() + 420;
+      changeGallery(dx < 0 ? 1 : -1);
+    }, { passive: true });
+    const finishGesture = (event) => {
+      if (!start) return;
+      const isMouseFallback = start.pointerId === 'mouse-fallback' && event.type === 'mouseup';
+      if (!isMouseFallback && event.pointerId !== start.pointerId) return;
+      const dx = event.clientX - start.x;
+      const dy = event.clientY - start.y;
+      const elapsed = performance.now() - start.time;
+      const pointerType = start.pointerType;
+        start = null;
+        target.classList.remove('is-dragging');
+        const maxGestureTime = pointerType === 'mouse' ? Infinity : 800;
+      if (elapsed > maxGestureTime || Math.abs(dx) < 42 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+      suppressGalleryClickUntil = performance.now() + 420;
+      changeGallery(dx < 0 ? 1 : -1);
+    };
+    target.addEventListener('pointerup', finishGesture, { passive: true });
+    target.addEventListener('mouseup', finishGesture, { passive: true });
+    // Algunos navegadores no conservan el pointer capture al cruzar una capa.
+    // Escuchar también en window hace que el gesto termine de forma consistente.
+    window.addEventListener('pointerup', finishGesture, { passive: true });
+    window.addEventListener('mouseup', finishGesture, { passive: true });
+    target.addEventListener('pointercancel', () => {
+      start = null;
+      target.classList.remove('is-dragging');
+    }, { passive: true });
+  };
+  bindGallerySwipe(galleryImage);
+  bindGallerySwipe(lightbox?.querySelector('.gallery-lightbox-stage'));
   videoThumbs?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-video-index]');
     if (!button) return;
@@ -889,11 +1008,31 @@ async function loadCatalog() {
     renderAudio(catalog.audio || []);
     renderVideos(catalog.videos || []);
     renderGallery(catalog.gallery || []);
-    renderMedia(catalog);
+    const mediaSection = $('#media');
+    let mediaReady = false;
+    const renderMediaWhenNeeded = () => {
+      if (mediaReady) return;
+      mediaReady = true;
+      renderMedia(catalog);
+    };
+    const opensMedia = () => /^#media(?:-|$)/.test(window.location.hash);
+    if (!mediaSection || !('IntersectionObserver' in window) || opensMedia()) {
+      renderMediaWhenNeeded();
+    } else {
+      const observer = new IntersectionObserver((entries, instance) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        instance.disconnect();
+        renderMediaWhenNeeded();
+      }, { rootMargin: '1100px 0px' });
+      observer.observe(mediaSection);
+      window.addEventListener('hashchange', () => { if (opensMedia()) renderMediaWhenNeeded(); });
+    }
     document.addEventListener('click', (event) => {
       const projectLink = event.target.closest('[data-project]');
-      if (!projectLink || typeof window.whbOpenProject !== 'function') return;
+      if (!projectLink) return;
       event.preventDefault();
+      renderMediaWhenNeeded();
+      if (typeof window.whbOpenProject !== 'function') return;
       window.whbOpenProject(projectLink.dataset.project);
     });
   } catch (error) {
@@ -1004,17 +1143,24 @@ function initRemoteStaticAssets() {
 function initNavigation() {
   const nav = $('#chapter-nav');
   const toggle = $('.nav-toggle');
+  const closeMenu = () => {
+    nav?.classList.remove('is-open');
+    toggle?.setAttribute('aria-expanded', 'false');
+  };
   toggle?.addEventListener('click', () => {
     const open = nav.classList.toggle('is-open');
     toggle.setAttribute('aria-expanded', String(open));
   });
   nav?.addEventListener('click', (event) => {
-    if (event.target.closest('a') && nav.classList.contains('is-open')) {
-      nav.classList.remove('is-open'); toggle?.setAttribute('aria-expanded', 'false');
-    }
+    if (event.target.closest('a')) closeMenu();
   });
+  document.addEventListener('pointerdown', (event) => {
+    if (!nav?.classList.contains('is-open')) return;
+    if (event.target.closest('#chapter-nav, .nav-toggle')) return;
+    closeMenu();
+  }, { passive: true });
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') { nav?.classList.remove('is-open'); toggle?.setAttribute('aria-expanded', 'false'); }
+    if (event.key === 'Escape') closeMenu();
   });
   const links = $$('.chapter-nav a');
   const navigationTargets = $$('.chapter, [data-nav-anchor]');
